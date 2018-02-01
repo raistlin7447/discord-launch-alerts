@@ -1,0 +1,6 @@
+aiohttp
+discord
+python-dateutil
+pytz
+redis
+logbook
