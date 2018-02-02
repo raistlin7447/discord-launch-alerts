@@ -25,7 +25,7 @@ def get_friendly_string_from_seconds(seconds: int):
     minutes = round(seconds % 3600 / 60)
     seconds = seconds % 60
 
-    return "T{}{:02}:{:02}:{:02}".format(sign, hours, minutes, seconds)
+    return "L{}{:02}:{:02}:{:02}".format(sign, hours, minutes, seconds)
 
 
 def get_launch_embed(launch, timezone):
