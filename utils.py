@@ -61,3 +61,16 @@ def get_launch_embed(launch, timezone):
     embed.add_field(name=launch["vehicle"], value="{}\n{}".format(launch["provider"], launch["location"]["name"]))
 
     return embed
+
+
+def is_today_launch(launch, timezone):
+    if not launch["win_open"]:
+        return False
+
+    timezone = pytz.timezone(timezone)
+
+    today_date = datetime.now(timezone).date()
+    launch_window = parse(launch["win_open"])
+    launch_window_date = launch_window.date()
+
+    return today_date == launch_window_date

@@ -4,7 +4,7 @@ import discord
 import aiohttp
 from datetime import datetime
 from logbook import Logger, StreamHandler
-from utils import get_config_from_message, get_launch_embed
+from utils import get_config_from_message, get_launch_embed, is_today_launch
 from local_config import *
 
 description = "Rocket launch lookup and alert bot."
@@ -53,6 +53,24 @@ async def next(ctx, num_launches: int = 1):
     launches = await get_multiple_launches(num_launches)
     for launch in launches:
         await bot.send_message(message.channel, embed=get_launch_embed(launch, config.timezone))
+
+
+@bot.command(pass_context=True)
+async def today(ctx):
+    """Get today's launches."""
+    message = ctx.message
+    config = get_config_from_message(message)
+    await bot.send_typing(message.channel)
+    launches = await get_multiple_launches(5)
+    found_launches = False
+
+    for launch in launches:
+        if is_today_launch(launch, config.timezone):
+            found_launches = True
+            await bot.send_message(message.channel, embed=get_launch_embed(launch, config.timezone))
+
+    if not found_launches:
+        await bot.send_message(message.channel, "There are no launches today. \u2639")
 
 
 @bot.command(pass_context=True)
