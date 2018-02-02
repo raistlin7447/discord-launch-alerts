@@ -31,6 +31,10 @@ async def get_launch_by_slug(slug: str):
             else:
                 return None
 
+async def send_launch_panel(channel, launch, timezone):
+    bot.log.info("[slug={}] launch panel sent".format(launch["slug"]))
+    await bot.send_message(channel, embed=get_launch_embed(launch, timezone))
+
 
 @bot.event
 async def on_ready():
@@ -47,17 +51,19 @@ async def on_ready():
 @bot.command(pass_context=True)
 async def next(ctx, num_launches: int = 1):
     """Get next launch.  Specify an integer to get more than one."""
+    bot.log.info("[command={}, num_launches={}] command called".format("next", num_launches))
     message = ctx.message
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
     launches = await get_multiple_launches(num_launches)
     for launch in launches:
-        await bot.send_message(message.channel, embed=get_launch_embed(launch, config.timezone))
+        await send_launch_panel(message.channel, launch, config.timezone)
 
 
 @bot.command(pass_context=True)
 async def today(ctx):
     """Get today's launches."""
+    bot.log.info("[command={}] command called".format("today"))
     message = ctx.message
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
@@ -67,25 +73,30 @@ async def today(ctx):
     for launch in launches:
         if is_today_launch(launch, config.timezone):
             found_launches = True
-            await bot.send_message(message.channel, embed=get_launch_embed(launch, config.timezone))
+            await send_launch_panel(message.channel, launch, config.timezone)
 
     if not found_launches:
+        bot.log.info("[command={}] no launches today".format("today"))
         await bot.send_message(message.channel, "There are no launches today. \u2639")
 
 
 @bot.command(pass_context=True)
 async def config(ctx, option=None, value=None):
     """Configure settings for this channel."""
+    bot.log.info("[command={}, option={}, value={}] command called".format("config", option, value))
     message = ctx.message
     config = get_config_from_message(message)
 
     if option is None:  # Send Options
+        bot.log.info("[command={}, option={}, value={}] options sent".format("config", option, value))
         await bot.send_message(message.channel, embed=config.config_options_embed())
     elif value is None:  # Get Value of Option
+        bot.log.info("[command={}, option={}, value={}] value sent".format("config", option, value))
         await bot.send_message(message.channel,
                                "{} is currently set to {}".format(option, config.__getattr__(option)))
     else:  # Set Value of Option
         config.__setattr__(option, value)
+        bot.log.info("[command={}, option={}, value={}] option set".format("config", option, value))
         await bot.send_message(message.channel,
                                "{} is now set to {}".format(option, config.__getattr__(option)))
 
@@ -93,13 +104,15 @@ async def config(ctx, option=None, value=None):
 @bot.command(pass_context=True)
 async def slug(ctx, slug):
     """Retrieve data for a specific launch."""
+    bot.log.info("[command={}, slug={}] command called".format("slug", slug))
     message = ctx.message
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
     launch = await get_launch_by_slug(slug)
     if launch:
-        await bot.send_message(message.channel, embed=get_launch_embed(launch, config.timezone))
+        await send_launch_panel(message.channel, launch, config.timezone)
     else:
+        bot.log.warning("[command={}, slug={}] slug not found called".format("slug", slug))
         await bot.send_message(message.channel, "No launch found with slug `{}`.".format(slug))
 
 
