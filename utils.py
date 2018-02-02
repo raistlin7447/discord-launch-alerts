@@ -32,7 +32,7 @@ def get_launch_embed(launch, timezone):
     slug = launch["slug"]
 
     embed = discord.Embed()
-    embed.title = launch["name"]
+    embed.title = "{} _(click for more)_".format(launch["name"])
     if launch["mission_description"]:
         embed.description = launch["mission_description"]
     embed.url = "https://www.rocketlaunch.live/launch/{}".format(slug)
