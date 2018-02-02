@@ -8,7 +8,7 @@ from utils import get_config_from_message, get_launch_embed
 from local_config import *
 
 description = "Rocket launch lookup and alert bot."
-bot = commands.Bot(command_prefix="!launch ", description=description)
+bot = commands.Bot(command_prefix=DISCORD_BOT_PREFIX, description=description)
 bot.session = aiohttp.ClientSession(loop=bot.loop)
 
 StreamHandler(sys.stdout).push_application()
@@ -22,9 +22,19 @@ async def get_multiple_launches(num_launches: int):
             return js["result"]
 
 
+async def get_launch_by_slug(slug: str):
+    async with bot.session.get('https://www.rocketlaunch.live/json/launch/{}'.format(slug)) as response:
+        if response.status == 200:
+            js = await response.json()
+            if js["result"]:
+                return js["result"][0]
+            else:
+                return None
+
+
 @bot.event
 async def on_ready():
-    await bot.change_presence(game=discord.Game(type=0, name="!launch help"))
+    await bot.change_presence(game=discord.Game(type=0, name="{}help".format(DISCORD_BOT_PREFIX)))
     bot.log.info('Logged in as')
     bot.log.info(f'Name: {bot.user.name}')
     bot.log.info(f'ID: {bot.user.id}')
@@ -67,5 +77,12 @@ async def slug(ctx, slug):
     """Retrieve data for a specific launch."""
     message = ctx.message
     config = get_config_from_message(message)
+    await bot.send_typing(message.channel)
+    launch = await get_launch_by_slug(slug)
+    if launch:
+        await bot.send_message(message.channel, embed=get_launch_embed(launch, config.timezone))
+    else:
+        await bot.send_message(message.channel, "No launch found with slug `{}`.".format(slug))
+
 
 bot.run(DISCORD_BOT_TOKEN)

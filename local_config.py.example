@@ -1,1 +1,2 @@
 DISCORD_BOT_TOKEN = "token"
+DISCORD_BOT_PREFIX = "!launch "
