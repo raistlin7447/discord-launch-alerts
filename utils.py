@@ -32,12 +32,12 @@ def get_launch_embed(launch, timezone):
     slug = launch["slug"]
 
     embed = discord.Embed()
-    embed.title = "{} _(click for more)_".format(launch["name"])
+    embed.title = "{}".format(launch["name"])
     if launch["mission_description"]:
         embed.description = launch["mission_description"]
     embed.url = "https://www.rocketlaunch.live/launch/{}".format(slug)
     embed.colour = 0x073349
-    embed.set_footer(text="Data provided by rocketlaunch.live | {}".format(slug))
+    embed.set_footer(text="Data by rocketlaunch.live | {}".format(slug))
 
     #  Date Embed Field
     if launch["win_open"]:
