@@ -15,17 +15,17 @@ def get_config_from_message(message: Message):
 
 
 def get_friendly_string_from_seconds(seconds: int):
-    if seconds < 0:
+    if seconds > 0:
         sign = "-"
     else:
         sign = "+"
 
     seconds = abs(seconds)
     hours = seconds // 3600
-    minutes = round(seconds % 3600 / 60)
-    seconds = seconds % 60
+    minutes = round(seconds % 3600 // 60)
+    s = seconds % 60
 
-    return "L{}{:02}:{:02}:{:02}".format(sign, hours, minutes, seconds)
+    return "L{}{:02}:{:02}:{:02}".format(sign, hours, minutes, s)
 
 
 def get_seconds_to_launch(launch):
