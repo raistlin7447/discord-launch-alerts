@@ -28,6 +28,22 @@ def get_friendly_string_from_seconds(seconds: int):
     return "L{}{:02}:{:02}:{:02}".format(sign, hours, minutes, seconds)
 
 
+def get_seconds_to_launch(launch):
+    window_open = launch["win_open"]
+    if window_open:
+        launch_window = parse(window_open)
+        seconds_to_launch = int((launch_window - datetime.now(pytz.utc)).total_seconds())
+        return seconds_to_launch
+
+
+def is_launching_soon(launch, seconds=24 * 60 * 60):
+    seconds_to_launch = get_seconds_to_launch(launch)
+    if seconds_to_launch:
+        return seconds_to_launch <= seconds
+    else:
+        return False
+
+
 def get_launch_embed(launch, timezone):
     slug = launch["slug"]
 
@@ -45,8 +61,8 @@ def get_launch_embed(launch, timezone):
         timezone = pytz.timezone(timezone)
         launch_window_local = launch_window.astimezone(timezone)
         launch_window_date_display = launch_window_local.strftime("%I:%M %p %Z").lstrip("0")
-        seconds_to_launch = int((datetime.now(pytz.utc) - launch_window).total_seconds())
-        if abs(seconds_to_launch) <= 24 * 60 * 60:
+        if is_launching_soon(launch):
+            seconds_to_launch = get_seconds_to_launch(launch)
             friendly_time_to_go = get_friendly_string_from_seconds(seconds_to_launch)
             launch_window_display = "{}\n{}".format(launch_window_date_display, friendly_time_to_go)
         else:
