@@ -5,3 +5,4 @@ pytz
 redis
 logbook
 nose
+freezegun

@@ -39,7 +39,22 @@ def get_seconds_to_launch(launch):
 def is_launching_soon(launch, seconds=24 * 60 * 60):
     seconds_to_launch = get_seconds_to_launch(launch)
     if seconds_to_launch:
-        return seconds_to_launch <= seconds
+        if seconds_to_launch < 0:
+            return False
+        else:
+            return seconds_to_launch <= seconds
+    else:
+        return False
+
+
+def has_launched_recently(launch, seconds=24 * 60 * 60):
+    seconds_to_launch = get_seconds_to_launch(launch)
+    if seconds_to_launch:
+        if seconds_to_launch > 0:
+            return False
+        else:
+            seconds_since_launch = -seconds_to_launch
+            return seconds_since_launch <= seconds
     else:
         return False
 
@@ -61,14 +76,17 @@ def get_launch_embed(launch, timezone):
         timezone = pytz.timezone(timezone)
         launch_window_local = launch_window.astimezone(timezone)
         launch_window_date_display = launch_window_local.strftime("%I:%M %p %Z").lstrip("0")
-        if is_launching_soon(launch):
+        if is_launching_soon(launch) or has_launched_recently(launch):
             seconds_to_launch = get_seconds_to_launch(launch)
             friendly_time_to_go = get_friendly_string_from_seconds(seconds_to_launch)
             launch_window_display = "{}\n{}".format(launch_window_date_display, friendly_time_to_go)
         else:
             launch_window_display = launch_window_date_display
 
-        date_display = launch_window_local.strftime("%b %d").upper()
+        if get_seconds_to_launch(launch) < 0:   # Launch in the past needs the year to not be confusing
+            date_display = launch_window_local.strftime("%b %d, %Y").upper()
+        else:
+            date_display = launch_window_local.strftime("%b %d").upper()
         embed.add_field(name=date_display, value=launch_window_display)
     else:
         date_display = launch["date_str"].upper()
