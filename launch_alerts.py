@@ -17,8 +17,10 @@ StreamHandler(sys.stdout).push_application()
 bot.log = Logger('Launch Alerts Bot')
 
 
-async def get_multiple_launches(num_launches: int):
-    async with bot.session.get('https://www.rocketlaunch.live/json/launch/next/{}'.format(num_launches)) as response:
+async def get_multiple_launches(args: list):
+    # Uses slash to separate parameters
+    params = "/".join(args)
+    async with bot.session.get('https://www.rocketlaunch.live/json/launch/next/{}'.format(params)) as response:
         if response.status == 200:
             js = await response.json()
             return js["result"]
@@ -62,13 +64,19 @@ async def on_ready():
 
 
 @bot.command(pass_context=True)
-async def next(ctx, num_launches: int = 1):
-    """Get next launch.  Specify an integer to get more than one."""
-    bot.log.info("[command={}, num_launches={}] command called".format("next", num_launches))
+async def next(ctx, *args):
+    """Get next launch with optional filtering.  Be sure to use quotes if your filters contain spaces.
+    Examples:
+    !launch next 2 (get next two launches)
+    !launch next crs (get next CRS launch)
+    !launch next 2 crs (get next two CRS launches)
+    !launch next 3 "falcon 9" (get next three Falcon 9 launches)
+    !launch next "falcon heavy" (get next Falcon Heavy launch)"""
+    bot.log.info("[command={}, num_launches={}] command called".format("next", args))
     message = ctx.message
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
-    launches = await get_multiple_launches(num_launches)
+    launches = await get_multiple_launches(args)
     for launch in launches:
         asyncio.ensure_future(send_launch_panel(message.channel, launch, config.timezone))
 
