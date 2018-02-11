@@ -88,7 +88,7 @@ async def today(ctx):
     message = ctx.message
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
-    launches = await get_multiple_launches(5)
+    launches = await get_multiple_launches('5',)
     found_launches = False
 
     for launch in launches:
