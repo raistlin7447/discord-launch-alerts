@@ -17,7 +17,7 @@ StreamHandler(sys.stdout).push_application()
 bot.log = Logger('Launch Alerts Bot')
 
 
-async def get_multiple_launches(args: list):
+async def get_multiple_launches(args: tuple):
     # Uses slash to separate parameters
     params = "/".join(args)
     async with bot.session.get('https://www.rocketlaunch.live/json/launch/next/{}'.format(params)) as response:
@@ -88,7 +88,7 @@ async def today(ctx):
     message = ctx.message
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
-    launches = await get_multiple_launches('5',)
+    launches = await get_multiple_launches(('5',),)
     found_launches = False
 
     for launch in launches:
