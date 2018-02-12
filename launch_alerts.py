@@ -18,6 +18,8 @@ from utils import get_config_from_message, get_launch_embed, is_today_launch, is
 from local_config import *
 
 description = "Rocket launch lookup and alert bot."
+
+# TODO Make bot prefix configurable per server instead of installation
 bot = commands.Bot(command_prefix=DISCORD_BOT_PREFIX, description=description)
 bot.session = aiohttp.ClientSession(loop=bot.loop)
 
