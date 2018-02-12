@@ -27,8 +27,7 @@ def get_config_from_channel(channel: Union[Channel, PrivateChannel]):
 def get_config_from_db_key(db_key: str):
     if db_key.startswith(UserConfig.KEY_PREFIX):
         _, _, user_id = db_key.split("-")
-        user = User(id=user_id)
-        return UserConfig(user)
+        return UserConfig(user_id)
     elif db_key.startswith(ChannelConfig.KEY_PREFIX):
         _, _, server_id, channel_id = db_key.split("-")
         return ChannelConfig(server_id, channel_id)

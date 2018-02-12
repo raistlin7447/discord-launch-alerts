@@ -102,12 +102,12 @@ class ChannelConfig(Config):
 class UserConfig(Config):
     KEY_PREFIX = 'config-user'
 
-    def __init__(self, user: User):
-        self.user = user
+    def __init__(self, user_id):
+        self.user_id = user_id
         super().__init__()
 
     def _get_db_key_name(self):
-        return '{}-{}'.format(self.KEY_PREFIX, self.user.id)
+        return '{}-{}'.format(self.KEY_PREFIX, self.user_id)
 
     def _get_config_items(self):
         return [

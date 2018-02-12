@@ -4,6 +4,7 @@ import asyncio
 from typing import List
 import pytz
 from dateutil.parser import parse
+from discord import User
 from discord.ext import commands
 import discord
 import aiohttp
@@ -39,8 +40,8 @@ async def save_launch_alerts(upcoming_launches: List[dict], alert_sent_lms: List
                         continue
                     new_lm = LaunchMonitor()
                     new_lm.load({
-                        "server": config.server_id,
-                        "channel": config.channel_id,
+                        "server": config.server_id if hasattr(config, "server_id") else None,
+                        "channel": config.channel_id if hasattr(config, "channel_id") else config.user_id,
                         "launch_slug": upcoming_launch["slug"],
                         "launch_win_open": parse(upcoming_launch["win_open"]).strftime(ISOFORMAT),
                         "last_alert": None
@@ -60,12 +61,19 @@ async def save_launch_alerts(upcoming_launches: List[dict], alert_sent_lms: List
 
 
 async def get_launch_alerts(due_only=True) -> List[LaunchMonitor]:
-    launch_monitors_from_db = json.loads(db.get(LAUNCH_MONITORS_KEY))
+    launch_monitors_from_db = db.get(LAUNCH_MONITORS_KEY)
+    if launch_monitors_from_db:
+        launch_monitors_from_db = json.loads(launch_monitors_from_db)
+    else:
+        launch_monitors_from_db = []
 
     monitors = []
     for launch_monitor in launch_monitors_from_db:
-        channel = bot.get_channel(launch_monitor["channel"])
-        config = get_config_from_channel(channel)
+        if launch_monitor["server"]:
+            config = ChannelConfig(launch_monitor["server"], launch_monitor["channel"])
+        else:
+            config = UserConfig(launch_monitor["channel"])
+
         lm = LaunchMonitor()
         lm.load(launch_monitor, config.alert_times)
         if not due_only or lm.is_alert_due():
@@ -87,8 +95,12 @@ async def process_alerts():
 
 
 async def send_launch_alert(lm: LaunchMonitor) -> None:
-    channel = bot.get_channel(lm.channel)
-    config = get_config_from_channel(channel)
+    if lm.server:
+        channel = bot.get_channel(lm.channel)
+        config = get_config_from_channel(channel)
+    else:  # User configs are different
+        channel = User(id=lm.channel)
+        config = UserConfig(lm.channel)
     launch = await get_launch_by_slug(lm.launch)
     asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone))
     lm.last_alert = datetime.now(pytz.utc)
