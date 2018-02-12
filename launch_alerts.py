@@ -137,6 +137,8 @@ async def send_launch_panel(channel, launch, timezone):
     else:
         seconds_to_keep_updated = 1
     launch_message = None
+    # TODO find a better way to keep panels updated.  Time doesn't seem the best idea.  Maybe after a certain number
+    #     message have passed by in the channel?
     for i in range(seconds_to_keep_updated):
         if not launch_message:
             launch_message = await bot.send_message(channel, embed=get_launch_embed(launch, timezone))
