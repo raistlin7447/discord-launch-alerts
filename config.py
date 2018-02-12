@@ -1,7 +1,6 @@
 from json import loads, dumps
 import discord
 import redis
-from discord import Server, User, Channel
 
 
 class ConfigItem:

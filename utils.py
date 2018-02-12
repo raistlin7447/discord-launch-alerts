@@ -1,10 +1,9 @@
 from typing import Union
-
 import discord
 import pytz
 from datetime import datetime
 from dateutil.parser import parse
-from discord import Message, Channel, PrivateChannel, User
+from discord import Message, Channel, PrivateChannel
 from config import UserConfig, ChannelConfig
 
 
