@@ -93,6 +93,7 @@ class ChannelConfig(Config):
     def _get_config_items(self):
         return [
             ConfigItem("receive_alerts", "false", "Receive alerts for upcoming launches in this channel"),
+            ConfigItem("alert_times", "24h, 12h, 6h, 3h, 1h, 15m", "Comma separated list of time to launch for alerts"),
             ConfigItem("timezone", "UTC", "Timezone for messages in this channel"),
         ]
 
@@ -110,5 +111,6 @@ class UserConfig(Config):
     def _get_config_items(self):
         return [
             ConfigItem("receive_alerts", "false", "Receive alerts for upcoming launches"),
+            ConfigItem("alert_times", "24h, 12h, 6h, 3h, 1h, 15m", "Comma separated list of time to launch for alerts"),
             ConfigItem("timezone", "UTC", "Timezone for messages"),
         ]
