@@ -10,7 +10,7 @@ from config import UserConfig, ChannelConfig
 
 def get_config_from_message(message: Message):
     if message.channel.is_private:
-        config = UserConfig(message.author)
+        config = UserConfig(message.author.id)
     else:
         config = ChannelConfig(message.channel.server.id, message.channel.id)
     return config
@@ -18,7 +18,7 @@ def get_config_from_message(message: Message):
 
 def get_config_from_channel(channel: Union[Channel, PrivateChannel]):
     if channel.is_private:
-        config = UserConfig(channel.owner)
+        config = UserConfig(channel.owner.id)
     else:
         config = ChannelConfig(channel.server.id, channel.id)
     return config
