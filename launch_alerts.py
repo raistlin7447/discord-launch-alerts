@@ -51,6 +51,9 @@ async def save_launch_alerts(upcoming_launches: List[dict], alert_sent_lms: List
                     for current_lm in await get_launch_alerts(due_only=False):
                         if new_lm == current_lm:
                             new_lm.last_alert = current_lm.last_alert
+                            # TODO check for launch_win_open change here and send alert that the window has moved
+                            # if new_lm.launch_win_open != current_lm.launch_win_open:
+                            #     "[mission name] has been moved to [time].  Go to [link] to find out more.
 
                     # Update last_alert for messages we just sent
                     for alert_sent_lm in alert_sent_lms:
@@ -117,6 +120,7 @@ async def get_multiple_launches(args: tuple):
 
 async def get_launch_by_slug(slug: str):
     # TODO: Add caching for launch data so that we don't retrieve it too often
+    #     Safe to redis key, perhaps "cache-slug" with 60 second expiry.  If not there, fetch, then save to redis
     async with bot.session.get('https://www.rocketlaunch.live/json/launch/{}'.format(slug)) as response:
         if response.status == 200:
             js = await response.json()
