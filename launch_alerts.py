@@ -1,12 +1,19 @@
+import json
 import sys
-
 import asyncio
+from typing import List
+import pytz
+from dateutil.parser import parse
 from discord.ext import commands
 import discord
 import aiohttp
 from datetime import datetime
 from logbook import Logger, StreamHandler
-from utils import get_config_from_message, get_launch_embed, is_today_launch, is_launching_soon
+from config import ChannelConfig, UserConfig
+from launch_monitor import LaunchMonitor, ISOFORMAT
+from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
+from utils import get_config_from_message, get_launch_embed, is_today_launch, is_launching_soon, \
+    get_config_from_channel, get_config_from_db_key
 from local_config import *
 
 description = "Rocket launch lookup and alert bot."
@@ -15,6 +22,76 @@ bot.session = aiohttp.ClientSession(loop=bot.loop)
 
 StreamHandler(sys.stdout).push_application()
 bot.log = Logger('Launch Alerts Bot')
+
+
+async def save_launch_alerts(upcoming_launches: List[dict], alert_sent_lms: List[LaunchMonitor]) -> None:
+    """Get all configurations with launch alerts turned on.  Update with last alert times and save to DB."""
+    db_keys = db.keys()
+
+    launch_monitors_to_save = []
+    for key in db_keys:
+        if key.startswith(ChannelConfig.KEY_PREFIX) or key.startswith(UserConfig.KEY_PREFIX):
+            config = get_config_from_db_key(str(key))
+            if config.receive_alerts == "true":
+                for upcoming_launch in upcoming_launches:
+                    # Create clean list for all launch monitors
+                    if not upcoming_launch["win_open"]:
+                        continue
+                    new_lm = LaunchMonitor()
+                    new_lm.load({
+                        "server": config.server_id,
+                        "channel": config.channel_id,
+                        "launch_slug": upcoming_launch["slug"],
+                        "launch_win_open": parse(upcoming_launch["win_open"]).strftime(ISOFORMAT),
+                        "last_alert": None
+                    }, config.alert_times)
+
+                    # Update last_alert from times in the DB
+                    for current_lm in await get_launch_alerts(due_only=False):
+                        if new_lm == current_lm:
+                            new_lm.last_alert = current_lm.last_alert
+
+                    # Update last_alert for messages we just sent
+                    for alert_sent_lm in alert_sent_lms:
+                        if new_lm == alert_sent_lm:
+                            new_lm.last_alert = alert_sent_lm.last_alert
+                    launch_monitors_to_save.append(new_lm.dump())
+    db.set(LAUNCH_MONITORS_KEY, json.dumps(launch_monitors_to_save))
+
+
+async def get_launch_alerts(due_only=True) -> List[LaunchMonitor]:
+    launch_monitors_from_db = json.loads(db.get(LAUNCH_MONITORS_KEY))
+
+    monitors = []
+    for launch_monitor in launch_monitors_from_db:
+        channel = bot.get_channel(launch_monitor["channel"])
+        config = get_config_from_channel(channel)
+        lm = LaunchMonitor()
+        lm.load(launch_monitor, config.alert_times)
+        if not due_only or lm.is_alert_due():
+            monitors.append(lm)
+
+    return monitors
+
+
+async def process_alerts():
+    await bot.wait_until_ready()
+    while not bot.is_closed:
+        lms = await get_launch_alerts()
+        for lm in lms:
+            bot.log.info("[slug={}] sending launch alert".format(lm.launch))
+            await send_launch_alert(lm)
+        upcoming_launches = await get_multiple_launches(("5",))
+        await save_launch_alerts(upcoming_launches, lms)
+        await asyncio.sleep(60)
+
+
+async def send_launch_alert(lm: LaunchMonitor) -> None:
+    channel = bot.get_channel(lm.channel)
+    config = get_config_from_channel(channel)
+    launch = await get_launch_by_slug(lm.launch)
+    asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone))
+    lm.last_alert = datetime.now(pytz.utc)
 
 
 async def get_multiple_launches(args: tuple):
@@ -27,6 +104,7 @@ async def get_multiple_launches(args: tuple):
 
 
 async def get_launch_by_slug(slug: str):
+    # TODO: Add caching for launch data so that we don't retrieve it too often
     async with bot.session.get('https://www.rocketlaunch.live/json/launch/{}'.format(slug)) as response:
         if response.status == 200:
             js = await response.json()
@@ -137,4 +215,5 @@ async def slug(ctx, slug):
         await bot.send_message(message.channel, "No launch found with slug `{}`.".format(slug))
 
 
+bot.loop.create_task(process_alerts())
 bot.run(DISCORD_BOT_TOKEN)

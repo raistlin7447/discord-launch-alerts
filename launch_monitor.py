@@ -13,22 +13,34 @@ class InvalidAlertTimeFormat(Exception): pass
 
 class LaunchMonitor:
     def __init__(self):
+        self.server = None
+        self.channel = None
         self.launch = None
         self.launch_win_open = None
         self.last_alert = None
         self.alert_datetimes = None
 
+    def __eq__(self, other):
+        return self.channel == other.channel and self.launch == other.launch
+
     def load(self, data: dict, alert_times: str) -> None:
+        self.server = data["server"]
+        self.channel = data["channel"]
         self.launch = data["launch_slug"]
         self.launch_win_open = datetime.strptime(data["launch_win_open"], ISOFORMAT)
-        self.last_alert = datetime.strptime(data["last_alert"], ISOFORMAT)
+        if data["last_alert"]:
+            self.last_alert = datetime.strptime(data["last_alert"], ISOFORMAT)
+        else:
+            self.last_alert = None
         self.alert_datetimes = self._get_alert_datetimes(alert_times)
 
     def dump(self) -> dict:
         data = {
+            "server": self.server,
+            "channel": self.channel,
             "launch_slug": self.launch,
             "launch_win_open": self.launch_win_open.strftime(ISOFORMAT),
-            "last_alert": self.last_alert.strftime(ISOFORMAT)
+            "last_alert": self.last_alert.strftime(ISOFORMAT) if self.last_alert else None
         }
         return data
 
@@ -41,8 +53,11 @@ class LaunchMonitor:
 
         past_due_alert = None
         for alert_datetime in self.alert_datetimes:
-            if self.last_alert < alert_datetime < now:
-                past_due_alert = alert_datetime
+            if alert_datetime < now:
+                if not self.last_alert:
+                    past_due_alert = alert_datetime
+                elif self.last_alert < alert_datetime:
+                    past_due_alert = alert_datetime
 
         if past_due_alert:
             return past_due_alert

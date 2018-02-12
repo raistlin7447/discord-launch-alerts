@@ -18,7 +18,7 @@ class ConfigItem:
 class Config:
     def __init__(self):
         self._config_items = self._get_config_items()
-        self.db = redis.StrictRedis(host='localhost')
+        self.db = redis.StrictRedis(host='localhost')  # TODO: Make DB configurable in local_config
         self._get_config_from_db()
 
     def _get_config_from_db(self):
@@ -81,14 +81,15 @@ class Config:
 
 
 class ChannelConfig(Config):
-    KEY_PREFIX = 'config-server'
+    KEY_PREFIX = 'config-channel'
 
-    def __init__(self, channel: Channel):
-        self.channel = channel
+    def __init__(self, server_id: str, channel_id: str):
+        self.server_id = server_id
+        self.channel_id = channel_id
         super().__init__()
 
     def _get_db_key_name(self):
-        return '{}-{}'.format(self.KEY_PREFIX, self.channel.id)
+        return '{}-{}-{}'.format(self.KEY_PREFIX, self.server_id, self.channel_id)
 
     def _get_config_items(self):
         return [

@@ -1,8 +1,10 @@
+from typing import Union
+
 import discord
 import pytz
 from datetime import datetime
 from dateutil.parser import parse
-from discord import Message
+from discord import Message, Channel, PrivateChannel, User
 from config import UserConfig, ChannelConfig
 
 
@@ -10,8 +12,27 @@ def get_config_from_message(message: Message):
     if message.channel.is_private:
         config = UserConfig(message.author)
     else:
-        config = ChannelConfig(message.server)
+        config = ChannelConfig(message.channel.server.id, message.channel.id)
     return config
+
+
+def get_config_from_channel(channel: Union[Channel, PrivateChannel]):
+    if channel.is_private:
+        config = UserConfig(channel.owner)
+    else:
+        config = ChannelConfig(channel.server.id, channel.id)
+    return config
+
+
+def get_config_from_db_key(db_key: str):
+    if db_key.startswith(UserConfig.KEY_PREFIX):
+        _, _, user_id = db_key.split("-")
+        user = User(id=user_id)
+        return UserConfig(user)
+    elif db_key.startswith(ChannelConfig.KEY_PREFIX):
+        _, _, server_id, channel_id = db_key.split("-")
+        return ChannelConfig(server_id, channel_id)
+    raise Exception("Can't match to KEY_PREFIX")
 
 
 def get_friendly_string_from_seconds(seconds: int):

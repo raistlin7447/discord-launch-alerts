@@ -38,6 +38,8 @@ class TestLaunchMonitor(unittest.TestCase):
     def test_dump(self):
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T14:00:00+0000",
             "last_alert": "2018-02-12T02:00:00+0000"
@@ -47,9 +49,23 @@ class TestLaunchMonitor(unittest.TestCase):
 
     @freeze_time("2018-02-12 08:10:00+00:00")
     def test_next_alert_datetime(self):
+        # No alerts yet
+        lm = LaunchMonitor()
+        data = {
+            "server": "360523650912223253",
+            "channel": "general",
+            "launch_slug": "test-slug",
+            "launch_win_open": "2018-02-12T14:00:00+0000",
+            "last_alert": None
+        }
+        lm.load(data, "24h, 12h, 6h, 3h, 1h, 15m")
+        self.assertEqual(lm.next_alert_datetime, datetime(2018, 2, 12, 8, 0, 0, tzinfo=pytz.utc))
+
         # One missed alert, should choose the 6h
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T14:00:00+0000",
             "last_alert": "2018-02-12T02:00:00+0000"
@@ -60,6 +76,8 @@ class TestLaunchMonitor(unittest.TestCase):
         # Multiple missed alerts, should choose the 15m
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T08:17:00+0000",
             "last_alert": "2018-02-12T02:00:00+0000"
@@ -70,6 +88,8 @@ class TestLaunchMonitor(unittest.TestCase):
         # No missed alerts, one left, should choose the 15m
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T09:05:00+0000",
             "last_alert": "2018-02-12T08:09:00+0000"
@@ -80,6 +100,8 @@ class TestLaunchMonitor(unittest.TestCase):
         # No missed alerts, none left, should return None
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T08:15:00+0000",
             "last_alert": "2018-02-12T08:05:00+0000"
@@ -89,9 +111,23 @@ class TestLaunchMonitor(unittest.TestCase):
 
     @freeze_time("2018-02-12 08:10:00+00:00")
     def test_is_alert_due(self):
+        # No alerts sent yet
+        lm = LaunchMonitor()
+        data = {
+            "server": "360523650912223253",
+            "channel": "general",
+            "launch_slug": "test-slug",
+            "launch_win_open": "2018-02-12T14:00:00+0000",
+            "last_alert": None
+        }
+        lm.load(data, "24h, 12h, 6h, 3h, 1h, 15m")
+        self.assertEqual(lm.is_alert_due(), True)
+
         # One missed alert
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T14:00:00+0000",
             "last_alert": "2018-02-12T02:00:00+0000"
@@ -102,6 +138,8 @@ class TestLaunchMonitor(unittest.TestCase):
         # Multiple missed alerts
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T08:17:00+0000",
             "last_alert": "2018-02-12T02:00:00+0000"
@@ -112,6 +150,8 @@ class TestLaunchMonitor(unittest.TestCase):
         # No missed alerts, one left
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T09:05:00+0000",
             "last_alert": "2018-02-12T08:09:00+0000"
@@ -122,6 +162,8 @@ class TestLaunchMonitor(unittest.TestCase):
         # No missed alerts, none left
         lm = LaunchMonitor()
         data = {
+            "server": "360523650912223253",
+            "channel": "general",
             "launch_slug": "test-slug",
             "launch_win_open": "2018-02-12T08:15:00+0000",
             "last_alert": "2018-02-12T08:05:00+0000"
