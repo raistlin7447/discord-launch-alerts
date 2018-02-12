@@ -72,7 +72,7 @@ async def next(ctx, *args):
     !launch next 2 crs (get next two CRS launches)
     !launch next 3 "falcon 9" (get next three Falcon 9 launches)
     !launch next "falcon heavy" (get next Falcon Heavy launch)"""
-    bot.log.info("[command={}, num_launches={}] command called".format("next", args))
+    bot.log.info("[command={}, args={}] command called".format("next", args))
     message = ctx.message
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
