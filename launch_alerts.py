@@ -107,7 +107,7 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
         channel = User(id=lm.channel)
         config = UserConfig(lm.channel)
     launch = await get_launch_by_slug(lm.launch)
-    asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming soon!"))
+    asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming up!"))
     lm.last_alert = datetime.now(pytz.utc)
 
 
