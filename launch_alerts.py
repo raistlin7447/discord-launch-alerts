@@ -9,7 +9,7 @@ from discord.ext import commands
 import discord
 import aiohttp
 from datetime import datetime
-from logbook import Logger, StreamHandler
+from logbook import Logger, StreamHandler, FileHandler
 from config import ChannelConfig, UserConfig
 from launch_monitor import LaunchMonitor, ISOFORMAT
 from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
@@ -24,6 +24,7 @@ bot = commands.Bot(command_prefix=DISCORD_BOT_PREFIX, description=description)
 bot.session = aiohttp.ClientSession(loop=bot.loop)
 
 StreamHandler(sys.stdout).push_application()
+FileHandler('discord-launch-alert.log', bubble=True).push_application()
 bot.log = Logger('Launch Alerts Bot')
 
 
