@@ -107,7 +107,7 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
         channel = User(id=lm.channel)
         config = UserConfig(lm.channel)
     launch = await get_launch_by_slug(lm.launch)
-    asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone))
+    asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming soon!"))
     lm.last_alert = datetime.now(pytz.utc)
 
 
@@ -132,7 +132,7 @@ async def get_launch_by_slug(slug: str):
                 return None
 
 
-async def send_launch_panel(channel, launch, timezone):
+async def send_launch_panel(channel, launch, timezone, message=None):
     bot.log.info("[slug={}] launch panel sent".format(launch["slug"]))
     if is_launching_soon(launch):
         seconds_to_keep_updated = 60 * 15
@@ -143,9 +143,9 @@ async def send_launch_panel(channel, launch, timezone):
     #     message have passed by in the channel?
     for i in range(seconds_to_keep_updated):
         if not launch_message:
-            launch_message = await bot.send_message(channel, embed=get_launch_embed(launch, timezone))
+            launch_message = await bot.send_message(channel, message, embed=get_launch_embed(launch, timezone))
         else:
-            await bot.edit_message(launch_message, embed=get_launch_embed(launch, timezone))
+            await bot.edit_message(launch_message, message, embed=get_launch_embed(launch, timezone))
         await asyncio.sleep(1)
 
 

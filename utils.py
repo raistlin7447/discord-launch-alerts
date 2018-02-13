@@ -79,7 +79,6 @@ def has_launched_recently(launch, seconds=24 * 60 * 60):
 
 
 def get_launch_embed(launch, timezone):
-    # TODO Expand support to add a message above the embed, that way we can state if it's an alert or not.
     slug = launch["slug"]
 
     embed = discord.Embed()
