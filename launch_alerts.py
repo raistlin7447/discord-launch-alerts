@@ -175,8 +175,16 @@ async def next(ctx, *args):
     config = get_config_from_message(message)
     await bot.send_typing(message.channel)
     launches = await get_multiple_launches(args)
-    for launch in launches:
-        asyncio.ensure_future(send_launch_panel(message.channel, launch, config.timezone))
+    if launches:
+        for launch in launches:
+            asyncio.ensure_future(send_launch_panel(message.channel, launch, config.timezone))
+    else:
+        if args[0].isnumeric():
+            filter_arg = " ".join(args[1:])
+        else:
+            filter_arg = " ".join(args)
+
+        await bot.send_message(message.channel, "No launches found with filter `{}`.".format(filter_arg))
 
 
 @bot.command(pass_context=True)
