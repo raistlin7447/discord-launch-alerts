@@ -162,7 +162,7 @@ async def on_ready():
         bot.uptime = datetime.utcnow()
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, aliases=['n'])
 async def next(ctx, *args):
     """Get next launch with optional filtering.  Be sure to use quotes if your filters contain spaces.
     Examples:
@@ -188,7 +188,7 @@ async def next(ctx, *args):
         await bot.send_message(message.channel, "No launches found with filter `{}`.".format(filter_arg))
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, aliases=['t'])
 async def today(ctx):
     """Get today's launches."""
     bot.log.info("[command={}] command called".format("today"))
@@ -208,7 +208,7 @@ async def today(ctx):
         await bot.send_message(message.channel, "There are no launches today. \u2639")
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, aliases=['c'])
 async def config(ctx, option=None, value=None):
     """Configure settings for this channel."""
     bot.log.info("[command={}, option={}, value={}] command called".format("config", option, value))
@@ -229,7 +229,7 @@ async def config(ctx, option=None, value=None):
                                "{} is now set to {}".format(option, config.__getattr__(option)))
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, aliases=['s'])
 async def slug(ctx, slug):
     """Retrieve data for a specific launch."""
     bot.log.info("[command={}, slug={}] command called".format("slug", slug))
