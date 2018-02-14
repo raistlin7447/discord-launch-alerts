@@ -210,7 +210,10 @@ async def today(ctx):
 
 @bot.command(pass_context=True, aliases=['c'])
 async def config(ctx, option=None, value=None):
-    """Configure settings for this channel."""
+    """Configure settings for this channel.
+    !launch config - View current config
+    !launch config option - View option
+    !launch config option value - Set option"""
     bot.log.info("[command={}, option={}, value={}] command called".format("config", option, value))
     message = ctx.message
     config = get_config_from_message(message)
