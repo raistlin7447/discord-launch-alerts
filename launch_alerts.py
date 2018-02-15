@@ -10,6 +10,8 @@ import discord
 import aiohttp
 from datetime import datetime
 from logbook import Logger, StreamHandler, FileHandler
+
+from acronym_utils import acronym_lookup, get_acronym_embed
 from config import ChannelConfig, UserConfig
 from launch_monitor import LaunchMonitor, ISOFORMAT
 from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
@@ -152,7 +154,7 @@ async def send_launch_panel(channel, launch, timezone, message=None):
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(game=discord.Game(type=0, name="{}help".format(DISCORD_BOT_PREFIX)))
+    await bot.change_presence(game=discord.Game(type=0, name="{}help".format(DISCORD_BOT_PREFIX[0])))
     bot.log.info('Logged in as')
     bot.log.info(f'Name: {bot.user.name}')
     bot.log.info(f'ID: {bot.user.id}')
@@ -245,6 +247,20 @@ async def slug(ctx, slug):
     else:
         bot.log.warning("[command={}, slug={}] slug not found called".format("slug", slug))
         await bot.send_message(message.channel, "No launch found with slug `{}`.".format(slug))
+
+@bot.command(pass_context=True, aliases=['a'])
+async def acronym(ctx, acronym):
+    """Try to find definition for an acronym."""
+    bot.log.info("[command={}, acronym={}] command called".format("acronym", acronym))
+    message = ctx.message
+    await bot.send_typing(message.channel)
+
+    definitions = await acronym_lookup(bot.session, acronym)
+    if definitions:
+        embed = get_acronym_embed(acronym, definitions)
+        await bot.send_message(message.channel, embed=embed)
+    else:
+        await bot.send_message(message.channel, "No definitions found for `{}`.".format(acronym))
 
 
 bot.loop.create_task(process_alerts())
