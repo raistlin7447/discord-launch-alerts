@@ -98,7 +98,8 @@ async def process_alerts():
             bot.log.info("[slug={}] sending launch alert".format(lm.launch))
             await send_launch_alert(lm)
         upcoming_launches = await get_multiple_launches(("5",))
-        await save_launch_alerts(upcoming_launches, lms)
+        if upcoming_launches:
+            await save_launch_alerts(upcoming_launches, lms)
         await asyncio.sleep(60)
 
 
