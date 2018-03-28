@@ -127,3 +127,8 @@ def is_today_launch(launch, timezone):
     launch_window_date = launch_window.date()
 
     return today_date == launch_window_date
+
+
+def get_server_name_from_channel(channel: Union[Channel, PrivateChannel]) -> Union[str, None]:
+    if isinstance(channel, Channel):
+        return channel.server

@@ -1,14 +1,14 @@
 import json
 import sys
 import asyncio
-from typing import List
+from typing import List, Union, Dict
 import pytz
 from dateutil.parser import parse
-from discord import User
+from discord import User, PrivateChannel, Channel
 from discord.ext import commands
 import discord
 import aiohttp
-from datetime import datetime
+from datetime import datetime, timedelta
 from logbook import Logger, StreamHandler, FileHandler
 
 from acronym_utils import acronym_lookup, get_acronym_embed
@@ -16,7 +16,7 @@ from config import ChannelConfig, UserConfig
 from launch_monitor import LaunchMonitor, ISOFORMAT
 from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
 from utils import get_config_from_message, get_launch_embed, is_today_launch, is_launching_soon, \
-    get_config_from_channel, get_config_from_db_key
+    get_config_from_channel, get_config_from_db_key, get_server_name_from_channel
 from local_config import *
 
 description = "Rocket launch lookup and alert bot."
@@ -138,21 +138,28 @@ async def get_launch_by_slug(slug: str):
                 return None
 
 
-async def send_launch_panel(channel, launch, timezone, message=None):
-    bot.log.info("[slug={}] launch panel sent".format(launch["slug"]))
+async def send_launch_panel(channel: Union[Channel, PrivateChannel], launch: Dict, timezone: str, message: str=None) -> None:
+    server = get_server_name_from_channel(channel)
+    bot.log.info("[server={}, channel={}, slug={}] launch panel sent".format(server, channel, launch["slug"]))
+    now = datetime.now()
     if is_launching_soon(launch):
         seconds_to_keep_updated = 60 * 15
     else:
         seconds_to_keep_updated = 1
+    update_until = now + timedelta(seconds=seconds_to_keep_updated)
     launch_message = None
     # TODO find a better way to keep panels updated.  Time doesn't seem the best idea.  Maybe after a certain number
     #     message have passed by in the channel?
-    for i in range(seconds_to_keep_updated):
+    while True:
         if not launch_message:
             launch_message = await bot.send_message(channel, message, embed=get_launch_embed(launch, timezone))
         else:
             await bot.edit_message(launch_message, message, embed=get_launch_embed(launch, timezone))
         await asyncio.sleep(1)
+        now = datetime.now()
+        if now > update_until:
+            bot.log.info("[server={}, channel={}, slug={}] done updating".format(server, channel, launch["slug"]))
+            break
 
 
 @bot.event
@@ -176,41 +183,45 @@ async def next(ctx, *args):
     !launch next 2 crs (get next two CRS launches)
     !launch next 3 "falcon 9" (get next three Falcon 9 launches)
     !launch next "falcon heavy" (get next Falcon Heavy launch)"""
-    bot.log.info("[command={}, args={}] command called".format("next", args))
     message = ctx.message
+    channel = message.channel
+    server = get_server_name_from_channel(channel)
+    bot.log.info("[server={}, channel={}, command={}, args={}] command called".format(server, channel, "next", args))
     config = get_config_from_message(message)
-    await bot.send_typing(message.channel)
+    await bot.send_typing(channel)
     launches = await get_multiple_launches(args)
     if launches:
         for launch in launches:
-            asyncio.ensure_future(send_launch_panel(message.channel, launch, config.timezone))
+            asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone))
     else:
         if args[0].isnumeric():
             filter_arg = " ".join(args[1:])
         else:
             filter_arg = " ".join(args)
 
-        await bot.send_message(message.channel, "No launches found with filter `{}`.".format(filter_arg))
+        await bot.send_message(channel, "No launches found with filter `{}`.".format(filter_arg))
 
 
 @bot.command(pass_context=True, aliases=['t'])
 async def today(ctx):
     """Get today's launches."""
-    bot.log.info("[command={}] command called".format("today"))
     message = ctx.message
+    channel = message.channel
+    server = get_server_name_from_channel(channel)
+    bot.log.info("[server={}, channel={}, command={}] command called".format(server, channel, "today"))
     config = get_config_from_message(message)
-    await bot.send_typing(message.channel)
+    await bot.send_typing(channel)
     launches = await get_multiple_launches(('5',),)
     found_launches = False
 
     for launch in launches:
         if is_today_launch(launch, config.timezone):
             found_launches = True
-            await send_launch_panel(message.channel, launch, config.timezone)
+            await send_launch_panel(channel, launch, config.timezone)
 
     if not found_launches:
-        bot.log.info("[command={}] no launches today".format("today"))
-        await bot.send_message(message.channel, "There are no launches today. \u2639")
+        bot.log.info("[[server={}, channel={}, command={}] no launches today".format(server, channel, "today"))
+        await bot.send_message(channel, "There are no launches today. \u2639")
 
 
 @bot.command(pass_context=True, aliases=['c'])
@@ -219,51 +230,57 @@ async def config(ctx, option=None, value=None):
     !launch config - View current config
     !launch config option - View option
     !launch config option value - Set option"""
-    bot.log.info("[command={}, option={}, value={}] command called".format("config", option, value))
     message = ctx.message
+    channel = message.channel
+    server = get_server_name_from_channel(channel)
+    bot.log.info("[server={}, channel={}, command={}, option={}, value={}] command called".format(server, channel, "config", option, value))
     config = get_config_from_message(message)
 
     if option is None:  # Send Options
-        bot.log.info("[command={}, option={}, value={}] options sent".format("config", option, value))
-        await bot.send_message(message.channel, embed=config.config_options_embed())
+        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] options sent".format(server, channel, "config", option, value))
+        await bot.send_message(channel, embed=config.config_options_embed())
     elif value is None:  # Get Value of Option
-        bot.log.info("[command={}, option={}, value={}] value sent".format("config", option, value))
-        await bot.send_message(message.channel,
+        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] value sent".format(server, channel, "config", option, value))
+        await bot.send_message(channel,
                                "{} is currently set to {}".format(option, config.__getattr__(option)))
     else:  # Set Value of Option
         config.__setattr__(option, value)
-        bot.log.info("[command={}, option={}, value={}] option set".format("config", option, value))
-        await bot.send_message(message.channel,
+        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] option set".format(server, channel, "config", option, value))
+        await bot.send_message(channel,
                                "{} is now set to {}".format(option, config.__getattr__(option)))
 
 
 @bot.command(pass_context=True, aliases=['s'])
 async def slug(ctx, slug):
     """Retrieve data for a specific launch."""
-    bot.log.info("[command={}, slug={}] command called".format("slug", slug))
     message = ctx.message
+    channel = message.channel
+    server = get_server_name_from_channel(channel)
+    bot.log.info("[server={}, channel={}, command={}, slug={}] command called".format(server, channel, "slug", slug))
     config = get_config_from_message(message)
-    await bot.send_typing(message.channel)
+    await bot.send_typing(channel)
     launch = await get_launch_by_slug(slug)
     if launch:
-        await send_launch_panel(message.channel, launch, config.timezone)
+        await send_launch_panel(channel, launch, config.timezone)
     else:
-        bot.log.warning("[command={}, slug={}] slug not found called".format("slug", slug))
-        await bot.send_message(message.channel, "No launch found with slug `{}`.".format(slug))
+        bot.log.warning("[server={}, channel={}, command={}, slug={}] slug not found called".format(server, channel, "slug", slug))
+        await bot.send_message(channel, "No launch found with slug `{}`.".format(slug))
 
 @bot.command(pass_context=True, aliases=['a'])
 async def acronym(ctx, acronym):
     """Try to find definition for an acronym."""
-    bot.log.info("[command={}, acronym={}] command called".format("acronym", acronym))
     message = ctx.message
-    await bot.send_typing(message.channel)
+    channel = message.channel
+    server = get_server_name_from_channel(channel)
+    bot.log.info("[server={}, channel={}, command={}, acronym={}] command called".format(server, channel, "acronym", acronym))
+    await bot.send_typing(channel)
 
     definitions = await acronym_lookup(bot.session, acronym)
     if definitions:
         embed = get_acronym_embed(acronym, definitions)
-        await bot.send_message(message.channel, embed=embed)
+        await bot.send_message(channel, embed=embed)
     else:
-        await bot.send_message(message.channel, "No definitions found for `{}`.".format(acronym))
+        await bot.send_message(channel, "No definitions found for `{}`.".format(acronym))
 
 
 bot.loop.create_task(process_alerts())
