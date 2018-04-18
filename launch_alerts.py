@@ -2,6 +2,7 @@ import json
 import sys
 import asyncio
 from typing import List, Union, Dict
+import backoff
 import pytz
 from dateutil.parser import parse
 from discord import User, PrivateChannel, Channel
@@ -117,6 +118,9 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
     lm.last_alert = datetime.now(pytz.utc)
 
 
+@backoff.on_exception(backoff.expo,
+                      aiohttp.ClientError,
+                      max_tries=5)
 async def get_multiple_launches(args: tuple):
     # Uses slash to separate parameters
     params = "/".join(args)
@@ -126,6 +130,9 @@ async def get_multiple_launches(args: tuple):
             return js["result"]
 
 
+@backoff.on_exception(backoff.expo,
+                      aiohttp.ClientError,
+                      max_tries=5)
 async def get_launch_by_slug(slug: str):
     # TODO: Add caching for launch data so that we don't retrieve it too often
     #     Safe to redis key, perhaps "cache-slug" with 60 second expiry.  If not there, fetch, then save to redis
