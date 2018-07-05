@@ -183,7 +183,7 @@ async def on_ready():
 
 @bot.command(pass_context=True, aliases=['n'])
 async def next(ctx, *args):
-    """Get next launch with optional filtering.  Be sure to use quotes if your filters contain spaces.
+    """Get next launch with optional filtering.
     Examples:
     !launch next 2 (get next two launches)
     !launch next crs (get next CRS launch)
