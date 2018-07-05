@@ -17,7 +17,7 @@ from config import ChannelConfig, UserConfig
 from launch_monitor import LaunchMonitor, ISOFORMAT
 from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
 from utils import get_config_from_message, get_launch_embed, is_today_launch, is_launching_soon, \
-    get_config_from_channel, get_config_from_db_key, get_server_name_from_channel
+    get_config_from_channel, get_config_from_db_key, get_server_name_from_channel, convert_quoted_string_in_list
 from local_config import *
 
 description = "Rocket launch lookup and alert bot."
@@ -188,14 +188,17 @@ async def next(ctx, *args):
     !launch next 2 (get next two launches)
     !launch next crs (get next CRS launch)
     !launch next 2 crs (get next two CRS launches)
-    !launch next 3 "falcon 9" (get next three Falcon 9 launches)
-    !launch next "falcon heavy" (get next Falcon Heavy launch)"""
+    !launch next 3 falcon 9 (get next three Falcon 9 launches)
+    !launch next falcon heavy (get next Falcon Heavy launch)"""
     message = ctx.message
     channel = message.channel
     server = get_server_name_from_channel(channel)
     bot.log.info("[server={}, channel={}, command={}, args={}] command called".format(server, channel, "next", args))
     config = get_config_from_message(message)
     await bot.send_typing(channel)
+
+    args = convert_quoted_string_in_list(args)
+
     launches = await get_multiple_launches(args)
     if launches:
         for launch in launches:

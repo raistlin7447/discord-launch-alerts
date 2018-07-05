@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 import discord
 import pytz
 from datetime import datetime
@@ -132,3 +132,18 @@ def is_today_launch(launch, timezone):
 def get_server_name_from_channel(channel: Union[Channel, PrivateChannel]) -> Union[str, None]:
     if isinstance(channel, Channel):
         return channel.server
+
+
+def convert_quoted_string_in_list(args: List) -> List:
+    new_list = []
+    if args[0].isnumeric():
+        new_list.append(args[0])
+        if len(args) > 2:
+            new_list.append(" ".join(args[1:]))
+        elif len(args) > 1:
+            new_list += args[1:]
+    elif len(args) > 1:
+        new_list.append(" ".join(args))
+    else:
+        new_list = args
+    return new_list

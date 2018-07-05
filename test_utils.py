@@ -1,6 +1,7 @@
 import unittest
 from freezegun import freeze_time
-from utils import get_friendly_string_from_seconds, get_seconds_to_launch, is_launching_soon, has_launched_recently
+from utils import get_friendly_string_from_seconds, get_seconds_to_launch, is_launching_soon, has_launched_recently, \
+    convert_quoted_string_in_list
 
 
 class TestUtils(unittest.TestCase):
@@ -57,3 +58,14 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(has_launched_recently(launch), False)
         launch = {"win_open": "2018-03-06T08:46:21+00:00"}
         self.assertEqual(has_launched_recently(launch), False)
+
+    def test_convert_quoted_string_in_list(self):
+        self.assertEqual(convert_quoted_string_in_list(['3']), ['3'])
+        self.assertEqual(convert_quoted_string_in_list(['3', 'falcon']), ['3', 'falcon'])
+        self.assertEqual(convert_quoted_string_in_list(['falcon']), ['falcon'])
+        self.assertEqual(convert_quoted_string_in_list(['3', 'falcon', '9']), ['3', 'falcon 9'])
+        self.assertEqual(convert_quoted_string_in_list(['3', 'falcon 9']), ['3', 'falcon 9'])
+        self.assertEqual(convert_quoted_string_in_list(['falcon', '9']), ['falcon 9'])
+        self.assertEqual(convert_quoted_string_in_list(['falcon 9']), ['falcon 9'])
+        self.assertEqual(convert_quoted_string_in_list(['5', 'united', 'launch', 'alliance']), ['5', 'united launch alliance'])
+        self.assertEqual(convert_quoted_string_in_list(['5', 'united launch alliance']), ['5', 'united launch alliance'])
