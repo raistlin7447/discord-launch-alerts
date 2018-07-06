@@ -136,7 +136,9 @@ def get_server_name_from_channel(channel: Union[Channel, PrivateChannel]) -> Uni
 
 def convert_quoted_string_in_list(args: List) -> List:
     new_list = []
-    if args[0].isnumeric():
+    if len(args) == 0:
+        pass
+    elif args[0].isnumeric():
         new_list.append(args[0])
         if len(args) > 2:
             new_list.append(" ".join(args[1:]))
