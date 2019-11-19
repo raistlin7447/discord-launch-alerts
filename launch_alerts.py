@@ -99,7 +99,10 @@ async def process_alerts():
         lms = await get_launch_alerts()
         for lm in lms:
             bot.log.info("[slug={}] sending launch alert".format(lm.launch))
-            await send_launch_alert(lm)
+            try:
+                await send_launch_alert(lm)
+            except Exception as e:
+                bot.log.exception("Error sending launch alert: {}".format(e))
         upcoming_launches = await get_multiple_launches(("5",))
         if upcoming_launches:
             await save_launch_alerts(upcoming_launches, lms)
@@ -109,7 +112,10 @@ async def process_alerts():
 async def send_launch_alert(lm: LaunchMonitor) -> None:
     if lm.server:
         channel = bot.get_channel(lm.channel)
-        config = get_config_from_channel(channel)
+        if channel:
+            config = get_config_from_channel(channel)
+        else:
+            return
     else:  # User configs are different
         channel = User(id=lm.channel)
         config = UserConfig(lm.channel)
