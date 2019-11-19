@@ -4,6 +4,8 @@ import pytz
 from datetime import datetime
 from dateutil.parser import parse
 from discord import Message, Channel, PrivateChannel
+from pytz import UnknownTimeZoneError
+
 from config import UserConfig, ChannelConfig
 
 
@@ -92,7 +94,10 @@ def get_launch_embed(launch, timezone):
     #  Date Embed Field
     if launch["win_open"]:
         launch_window = parse(launch["win_open"])
-        timezone = pytz.timezone(timezone)
+        try:
+            timezone = pytz.timezone(timezone)
+        except UnknownTimeZoneError:
+            timezone = pytz.UTC
         launch_window_local = launch_window.astimezone(timezone)
         launch_window_date_display = launch_window_local.strftime("%I:%M %p %Z").lstrip("0")
         if is_launching_soon(launch) or has_launched_recently(launch):

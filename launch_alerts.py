@@ -125,7 +125,7 @@ async def get_multiple_launches(args: tuple):
     headers = {"Authorization": "Bearer 44bd6b60-5002-4866-be8f-09cee79c92f7"}
     # Uses slash to separate parameters
     params = "/".join(args)
-    async with bot.session.get('https://www.rocketlaunch.live/json/launch/next/{}'.format(params), headers=headers) as response:
+    async with bot.session.get('https://fdo.rocketlaunch.live/json/launch/next/{}'.format(params), headers=headers) as response:
         if response.status == 200:
             js = await response.json()
             return js["result"]
@@ -138,7 +138,7 @@ async def get_launch_by_slug(slug: str):
     # TODO: Add caching for launch data so that we don't retrieve it too often
     #     Safe to redis key, perhaps "cache-slug" with 60 second expiry.  If not there, fetch, then save to redis
     headers = {"Authorization": "Bearer 44bd6b60-5002-4866-be8f-09cee79c92f7"}
-    async with bot.session.get('https://www.rocketlaunch.live/json/launch/{}'.format(slug), headers=headers) as response:
+    async with bot.session.get('https://fdo.rocketlaunch.live/json/launch/{}'.format(slug), headers=headers) as response:
         if response.status == 200:
             js = await response.json()
             if js["result"]:
