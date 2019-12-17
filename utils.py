@@ -116,7 +116,7 @@ def get_launch_embed(launch, timezone):
         date_display = launch["date_str"].upper()
         embed.add_field(name=date_display, value="Estimated")
 
-    embed.add_field(name=launch["vehicle"], value="{}\n{}".format(launch["provider"], launch["location"]["name"]))
+    embed.add_field(name=launch["vehicle"]["name"], value="{}\n{}".format(launch["provider"], launch["location"]["name"]))
 
     return embed
 
