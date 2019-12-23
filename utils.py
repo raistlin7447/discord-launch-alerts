@@ -103,7 +103,7 @@ def get_launch_embed(launch, timezone):
         if is_launching_soon(launch) or has_launched_recently(launch):
             seconds_to_launch = get_seconds_to_launch(launch)
             friendly_time_to_go = get_friendly_string_from_seconds(seconds_to_launch)
-            launch_window_display = "{}\n{}".format(launch_window_date_display, friendly_time_to_go)
+            launch_window_display = f"{launch_window_date_display}\n{friendly_time_to_go}"
         else:
             launch_window_display = launch_window_date_display
 
@@ -116,7 +116,11 @@ def get_launch_embed(launch, timezone):
         date_display = launch["date_str"].upper()
         embed.add_field(name=date_display, value="Estimated")
 
-    embed.add_field(name=launch["vehicle"]["name"], value="{}\n{}".format(launch["provider"], launch["location"]["name"]))
+    vehicle_name = launch["vehicle"]["name"]
+    provider_name = launch["provider"]["name"]
+    pad_name = launch["pad"]["name"]
+    location_name = launch["pad"]["location"]["name"]
+    embed.add_field(name=vehicle_name, value=f'{provider_name}\n{pad_name}, {location_name}')
 
     return embed
 
