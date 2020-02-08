@@ -262,7 +262,7 @@ async def today(ctx):
 
 
 @bot.command(pass_context=True, aliases=['c'])
-async def config(ctx, option=None, value=None):
+async def config(ctx, option=None, *, value=None):
     """Configure settings for this channel.
     !launch config - View current config
     !launch config option - View option

@@ -73,9 +73,9 @@ class Config:
         embed.description = "Launch Alerts supports the following configuration options.\n" \
                             "Set using `!launch config [option] [value]`."
         for config_item in self._config_items:
-            embed_value = "Default: {}\nValue: {}\n{}".format(config_item.default,
-                                                              self.__getattr__(config_item.name),
-                                                              config_item.help_text)
+            embed_value = "Default: {}\nCurrently: {}\n{}".format(config_item.default,
+                                                                  self.__getattr__(config_item.name),
+                                                                  config_item.help_text)
             embed.add_field(name=config_item.name, value=embed_value, inline=True)
 
         return embed
