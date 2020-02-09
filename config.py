@@ -18,7 +18,7 @@ class ConfigItem:
 class Config:
     def __init__(self):
         self._config_items = self._get_config_items()
-        self.db = redis.StrictRedis(host='localhost')  # TODO: Make DB configurable in local_config
+        self.db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)  # TODO: Make DB configurable in local_config
         self._get_config_from_db()
 
     def _get_config_from_db(self):
@@ -103,9 +103,7 @@ class Config:
         :returns: The message id for the embed (if it exists), otherwise None
         """
         key_name = self._get_embed_key_name()
-        value = self.db.get(key_name)
-        if value is not None:
-            return value.decode('utf-8')
+        return self.db.get(key_name)
 
 
 class ChannelConfig(Config):

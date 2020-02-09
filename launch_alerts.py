@@ -290,7 +290,6 @@ async def config(ctx, option=None, *, value=None):
                      .format(server, channel, "config", option, value))
         old_embed_id = config.get_embed_message()
 
-        print(old_embed_id)
         if old_embed_id:
             embed_message = await bot.get_message(ctx.message.channel, old_embed_id)
             await bot.edit_message(embed_message, embed=config.config_options_embed())
