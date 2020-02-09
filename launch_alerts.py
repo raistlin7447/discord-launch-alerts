@@ -277,7 +277,8 @@ async def config(ctx, option=None, *, value=None):
     if option is None:  # Send Options
         bot.log.info("[server={}, channel={}, command={}, option={}, value={}] options sent"
                      .format(server, channel, "config", option, value))
-        await bot.send_message(channel, embed=config.config_options_embed())
+        embed_message = await bot.send_message(channel, embed=config.config_options_embed())
+        config.record_embed_message(embed_message)
     elif value is None:  # Get Value of Option
         bot.log.info("[server={}, channel={}, command={}, option={}, value={}] value sent"
                      .format(server, channel, "config", option, value))
@@ -287,6 +288,12 @@ async def config(ctx, option=None, *, value=None):
         config.__setattr__(option, value)
         bot.log.info("[server={}, channel={}, command={}, option={}, value={}] option set"
                      .format(server, channel, "config", option, value))
+        old_embed_id = config.get_embed_message()
+
+        print(old_embed_id)
+        if old_embed_id:
+            embed_message = await bot.get_message(ctx.message.channel, old_embed_id)
+            await bot.edit_message(embed_message, embed=config.config_options_embed())
         await bot.send_message(channel,
                                "{} is now set to {}".format(option, config.__getattr__(option)))
 
