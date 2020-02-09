@@ -18,6 +18,7 @@ async def acronym_lookup(session: ClientSession, acronym: str) -> List[str]:
     else:
         return []
 
+
 def get_acronym_embed(acronym: str, definitions: List[str]):
     embed = discord.Embed()
     embed.title = acronym.upper()

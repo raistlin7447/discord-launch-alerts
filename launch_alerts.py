@@ -20,12 +20,28 @@ from utils import get_config_from_message, get_launch_embed, is_today_launch, is
     get_config_from_channel, get_config_from_db_key, get_server_name_from_channel, convert_quoted_string_in_list
 from local_config import *
 
-description = "Rocket launch lookup and alert bot."
-description = "Rocket launch lookup and alert bot.\n" \
-              "Valid prefixes: {}".format(", ".join(DISCORD_BOT_PREFIX))
 
-# TODO Make bot prefix configurable per server instead of installation
-bot = commands.Bot(command_prefix=DISCORD_BOT_PREFIX, description=description)
+def get_prefix(client, message):
+    """
+    This is a mostly undocumented feature of Discord.py v0.16.12
+    If you pass a callable into `commands.Bot(command_prefix=<value>)`
+    then the function will be called on message receipt to dynamically
+    determine the prefix
+
+    :param client: The bot object
+    :param message: The message being received
+    :return: A string or collection of strings denoting acceptable prefixes
+    """
+    if message.server.id in DISCORD_BOT_PREFIXES.keys():
+        return DISCORD_BOT_PREFIXES[message.server.id]
+    else:
+        return DEFAULT_BOT_PREFIX
+
+
+description = "Rocket launch lookup and alert bot.\n" \
+              "Valid prefixes: {}".format(", ".join(DEFAULT_BOT_PREFIX))
+
+bot = commands.Bot(command_prefix=get_prefix, description=description)
 bot.session = aiohttp.ClientSession(loop=bot.loop)
 
 StreamHandler(sys.stdout).push_application()
@@ -179,7 +195,7 @@ async def send_launch_panel(channel: Union[Channel, PrivateChannel], launch: Dic
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(game=discord.Game(type=0, name="{}help".format(DISCORD_BOT_PREFIX[0])))
+    await bot.change_presence(game=discord.Game(type=0, name="{}help".format(DEFAULT_BOT_PREFIX[0])))
     bot.log.info('Logged in as')
     bot.log.info(f'Name: {bot.user.name}')
     bot.log.info(f'ID: {bot.user.id}')
@@ -201,7 +217,8 @@ async def next(ctx, *args):
     message = ctx.message
     channel = message.channel
     server = get_server_name_from_channel(channel)
-    bot.log.info("[server={}, channel={}, command={}, args={}] command called".format(server, channel, "next", args))
+    bot.log.info("[server={}, channel={}, command={}, args={}] command called"
+                 .format(server, channel, "next", args))
     config = get_config_from_message(message)
     await bot.send_typing(channel)
 
@@ -226,7 +243,8 @@ async def today(ctx):
     message = ctx.message
     channel = message.channel
     server = get_server_name_from_channel(channel)
-    bot.log.info("[server={}, channel={}, command={}] command called".format(server, channel, "today"))
+    bot.log.info("[server={}, channel={}, command={}] command called"
+                 .format(server, channel, "today"))
     config = get_config_from_message(message)
     await bot.send_typing(channel)
     launches = await get_multiple_launches(('5',),)
@@ -238,12 +256,13 @@ async def today(ctx):
             await send_launch_panel(channel, launch, config.timezone)
 
     if not found_launches:
-        bot.log.info("[[server={}, channel={}, command={}] no launches today".format(server, channel, "today"))
+        bot.log.info("[[server={}, channel={}, command={}] no launches today"
+                     .format(server, channel, "today"))
         await bot.send_message(channel, "There are no launches today. \u2639")
 
 
 @bot.command(pass_context=True, aliases=['c'])
-async def config(ctx, option=None, value=None):
+async def config(ctx, option=None, *, value=None):
     """Configure settings for this channel.
     !launch config - View current config
     !launch config option - View option
@@ -251,19 +270,30 @@ async def config(ctx, option=None, value=None):
     message = ctx.message
     channel = message.channel
     server = get_server_name_from_channel(channel)
-    bot.log.info("[server={}, channel={}, command={}, option={}, value={}] command called".format(server, channel, "config", option, value))
+    bot.log.info("[server={}, channel={}, command={}, option={}, value={}] command called"
+                 .format(server, channel, "config", option, value))
     config = get_config_from_message(message)
 
     if option is None:  # Send Options
-        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] options sent".format(server, channel, "config", option, value))
-        await bot.send_message(channel, embed=config.config_options_embed())
+        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] options sent"
+                     .format(server, channel, "config", option, value))
+        embed_message = await bot.send_message(channel, embed=config.config_options_embed())
+        config.record_embed_message(embed_message)
     elif value is None:  # Get Value of Option
-        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] value sent".format(server, channel, "config", option, value))
+        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] value sent"
+                     .format(server, channel, "config", option, value))
         await bot.send_message(channel,
                                "{} is currently set to {}".format(option, config.__getattr__(option)))
     else:  # Set Value of Option
         config.__setattr__(option, value)
-        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] option set".format(server, channel, "config", option, value))
+        bot.log.info("[server={}, channel={}, command={}, option={}, value={}] option set"
+                     .format(server, channel, "config", option, value))
+        old_embed_id = config.get_embed_message()
+
+        print(old_embed_id)
+        if old_embed_id:
+            embed_message = await bot.get_message(ctx.message.channel, old_embed_id)
+            await bot.edit_message(embed_message, embed=config.config_options_embed())
         await bot.send_message(channel,
                                "{} is now set to {}".format(option, config.__getattr__(option)))
 
@@ -274,15 +304,18 @@ async def slug(ctx, slug):
     message = ctx.message
     channel = message.channel
     server = get_server_name_from_channel(channel)
-    bot.log.info("[server={}, channel={}, command={}, slug={}] command called".format(server, channel, "slug", slug))
-    config = get_config_from_message(message)
+    bot.log.info("[server={}, channel={}, command={}, slug={}] command called"
+                 .format(server, channel, "slug", slug))
+    message_config = get_config_from_message(message)
     await bot.send_typing(channel)
     launch = await get_launch_by_slug(slug)
     if launch:
-        await send_launch_panel(channel, launch, config.timezone)
+        await send_launch_panel(channel, launch, message_config.timezone)
     else:
-        bot.log.warning("[server={}, channel={}, command={}, slug={}] slug not found called".format(server, channel, "slug", slug))
+        bot.log.warning("[server={}, channel={}, command={}, slug={}] slug not found called"
+                        .format(server, channel, "slug", slug))
         await bot.send_message(channel, "No launch found with slug `{}`.".format(slug))
+
 
 @bot.command(pass_context=True, aliases=['a'])
 async def acronym(ctx, acronym):
@@ -290,7 +323,8 @@ async def acronym(ctx, acronym):
     message = ctx.message
     channel = message.channel
     server = get_server_name_from_channel(channel)
-    bot.log.info("[server={}, channel={}, command={}, acronym={}] command called".format(server, channel, "acronym", acronym))
+    bot.log.info("[server={}, channel={}, command={}, acronym={}] command called"
+                 .format(server, channel, "acronym", acronym))
     await bot.send_typing(channel)
 
     definitions = await acronym_lookup(bot.session, acronym)
