@@ -1,5 +1,5 @@
 DISCORD_BOT_TOKEN = "token"
-DISCORD_BOT_PREFIXES = {"360523650912223253": "!la ",
-                        "498066096474030092": ["!la", "!laAl "]}
+DISCORD_BOT_PREFIXES = {360523650912223253: "!la ",
+                        498066096474030092: ["!la", "!laAl "]}
 DEFAULT_BOT_PREFIX = ["!launch "]
 EMBED_EXPIRE_SECONDS = 60 * 60 * 24  # One hour
