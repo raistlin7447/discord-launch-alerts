@@ -1,27 +1,34 @@
-from typing import Union, List
+from typing import Union, List, Tuple, Any
+
+import aiohttp
 import discord
 import pytz
 from datetime import datetime
 from dateutil.parser import parse
-from discord import Message, Channel, PrivateChannel
+from discord import Message, DMChannel, TextChannel
 from pytz import UnknownTimeZoneError
 
 from config import UserConfig, ChannelConfig
 
 
+async def new_aiohttp_connector(*args, **kwargs) -> aiohttp.TCPConnector:
+    """*Yes, it's just a coro to instantiate a class.*"""
+    return aiohttp.TCPConnector(*args, **kwargs)
+
+
 def get_config_from_message(message: Message):
-    if message.channel.is_private:
+    if isinstance(message.channel, DMChannel):
         config = UserConfig(message.author.id)
     else:
-        config = ChannelConfig(message.channel.server.id, message.channel.id)
+        config = ChannelConfig(message.channel.guild.id, message.channel.id)
     return config
 
 
-def get_config_from_channel(channel: Union[Channel, PrivateChannel]):
-    if channel.is_private:
-        config = UserConfig(channel.owner.id)
+def get_config_from_channel(channel: Union[TextChannel, DMChannel]):
+    if isinstance(channel, DMChannel):
+        config = UserConfig(channel.recipient.id)
     else:
-        config = ChannelConfig(channel.server.id, channel.id)
+        config = ChannelConfig(channel.guild.id, channel.id)
     return config
 
 
@@ -138,12 +145,14 @@ def is_today_launch(launch, timezone):
     return today_date == launch_window_date
 
 
-def get_server_name_from_channel(channel: Union[Channel, PrivateChannel]) -> Union[str, None]:
-    if isinstance(channel, Channel):
-        return channel.server
+def get_server_name_from_channel(channel: Union[TextChannel, DMChannel]) -> Union[str, None]:
+    if isinstance(channel, TextChannel):
+        return channel.guild.name
+    elif isinstance(channel, DMChannel):
+        return channel.recipient.name
 
 
-def convert_quoted_string_in_list(args: List) -> List:
+def convert_quoted_string_in_list(args: Tuple[Any]) -> List:
     new_list = []
     if len(args) == 0:
         pass

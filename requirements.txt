@@ -1,9 +1,9 @@
-aiohttp
-backoff
-discord
-python-dateutil
-pytz
-redis
-logbook
+aiohttp==3.6.2
+backoff==1.10.0
+discord==1.0.1
+python-dateutil==2.8.1
+pytz==2019.3
+redis==3.4.1
+Logbook==1.5.3
 nose
-freezegun
+freezegun==0.3.15

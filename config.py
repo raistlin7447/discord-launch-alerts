@@ -3,6 +3,8 @@ import discord
 import redis
 from local_config import DEFAULT_BOT_PREFIX, EMBED_EXPIRE_SECONDS
 
+redis_db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)  # TODO: Make DB configurable in local_config
+
 
 class ConfigItem:
     def __init__(self, name, default, help_text):
@@ -18,12 +20,11 @@ class ConfigItem:
 class Config:
     def __init__(self):
         self._config_items = self._get_config_items()
-        self.db = redis.StrictRedis(host='localhost', charset="utf-8", decode_responses=True)  # TODO: Make DB configurable in local_config
         self._get_config_from_db()
 
     def _get_config_from_db(self):
         key_name = self._get_db_key_name()
-        db_data = self.db.get(key_name)
+        db_data = redis_db.get(key_name)
         if db_data:
             config_in_db = loads(db_data)
             for config_item in self._config_items:
@@ -37,7 +38,7 @@ class Config:
                 config_items_list[config_item.name] = config_item.value
 
         key_name = self._get_db_key_name()
-        self.db.set(key_name, dumps(config_items_list))
+        redis_db.set(key_name, dumps(config_items_list))
 
     def _get_db_key_name(self):
         raise NotImplementedError
@@ -93,7 +94,7 @@ class Config:
         :param message: The message with the embed in it
         """
         key_name = self._get_embed_key_name()
-        self.db.set(key_name, message.id, ex=EMBED_EXPIRE_SECONDS)
+        redis_db.set(key_name, message.id, ex=EMBED_EXPIRE_SECONDS)
 
     def get_embed_message(self) -> str:
         """
@@ -103,7 +104,7 @@ class Config:
         :returns: The message id for the embed (if it exists), otherwise None
         """
         key_name = self._get_embed_key_name()
-        return self.db.get(key_name)
+        return redis_db.get(key_name)
 
 
 class ChannelConfig(Config):
