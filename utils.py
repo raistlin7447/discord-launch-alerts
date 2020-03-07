@@ -87,7 +87,7 @@ def has_launched_recently(launch, seconds=24 * 60 * 60):
         return False
 
 
-def get_launch_embed(launch, timezone):
+def get_launch_embed(launch, timezone, show_countdown=True):
     slug = launch["slug"]
 
     embed = discord.Embed()
@@ -109,8 +109,10 @@ def get_launch_embed(launch, timezone):
         launch_window_date_display = launch_window_local.strftime("%I:%M %p %Z").lstrip("0")
         if is_launching_soon(launch) or has_launched_recently(launch):
             seconds_to_launch = get_seconds_to_launch(launch)
-            friendly_time_to_go = get_friendly_string_from_seconds(seconds_to_launch)
-            launch_window_display = f"{launch_window_date_display}\n{friendly_time_to_go}"
+            launch_window_display = f"{launch_window_date_display}"
+            if show_countdown:
+                friendly_time_to_go = get_friendly_string_from_seconds(seconds_to_launch)
+                launch_window_display += f"\n{friendly_time_to_go}"
         else:
             launch_window_display = launch_window_date_display
 

@@ -201,6 +201,8 @@ async def send_launch_panel(channel: Union[TextChannel, DMChannel], launch: Dict
         await asyncio.sleep(1)
         now = datetime.now()
         if now > update_until:
+            if launch_message:
+                await launch_message.edit(content=message, embed=get_launch_embed(launch, timezone, show_countdown=False))
             bot.log.info("[server={}, channel={}, slug={}] done updating".format(server, channel, launch["slug"]))
             break
 
