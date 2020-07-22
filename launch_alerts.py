@@ -120,6 +120,7 @@ async def process_alerts():
     for lm in lms:
         bot.log.info(f"[channel={lm.channel}, slug={lm.launch}] sending launch alert")
         try:
+            lm.last_alert = datetime.now(pytz.utc)
             await send_launch_alert(lm)
         except Exception as e:
             bot.log.exception("Error sending launch alert: {}".format(e))
@@ -140,6 +141,7 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
         if channel:
             config = get_config_from_channel(channel)
         else:
+            bot.log.error(f"[channel={lm.channel}, slug={lm.launch}] channel does not exist")
             return
     else:  # User configs are different
         user = bot.get_user(int(lm.channel))
@@ -149,7 +151,6 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
         config = UserConfig(lm.channel)
     launch = await get_launch_by_slug(lm.launch)
     asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming up!"))
-    lm.last_alert = datetime.now(pytz.utc)
 
 
 @backoff.on_exception(backoff.expo,
