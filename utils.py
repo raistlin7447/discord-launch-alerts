@@ -102,7 +102,7 @@ def get_launch_embed(launch, timezone, show_countdown=True):
 
     embed.url = "https://www.rocketlaunch.live/launch/{}".format(slug)
     embed.colour = 0x073349
-    embed.set_footer(text=f"🔔 to subscribe to TerminalCount\nData by rocketlaunch.live | {slug}")
+    embed.set_footer(text=f"🔔 Subscribe to TerminalCount\nData by rocketlaunch.live | {slug}")
 
     #  Date Embed Field
     if get_launch_win_open(launch):
