@@ -4,7 +4,7 @@ import asyncio
 from typing import List, Union, Dict, Sequence
 import backoff
 import pytz
-from discord import DMChannel, TextChannel
+from discord import DMChannel, TextChannel, Emoji
 from discord.ext import commands, tasks
 import discord
 import aiohttp
@@ -17,8 +17,10 @@ from launch_monitor import LaunchMonitor, ISOFORMAT
 from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
 from utils import get_config_from_message, get_launch_embed, is_today_launch, is_launching_soon, \
     get_config_from_channel, get_config_from_db_key, get_server_name_from_channel, convert_quoted_string_in_list, \
-    new_aiohttp_connector, get_launch_win_open
+    new_aiohttp_connector, get_launch_win_open, get_live_url
 from local_config import *
+
+SUB_EMOJI = "🔔"
 
 
 def get_prefix(client, message):
@@ -196,6 +198,7 @@ async def send_launch_panel(channel: Union[TextChannel, DMChannel], launch: Dict
     while True:
         if not launch_message:
             launch_message = await channel.send(message, embed=get_launch_embed(launch, timezone))
+            await launch_message.add_reaction(SUB_EMOJI)
         else:
             await launch_message.edit(content=message, embed=get_launch_embed(launch, timezone))
         await asyncio.sleep(1)
@@ -205,6 +208,69 @@ async def send_launch_panel(channel: Union[TextChannel, DMChannel], launch: Dict
                 await launch_message.edit(content=message, embed=get_launch_embed(launch, timezone, show_countdown=False))
             bot.log.info("[server={}, channel={}, slug={}] done updating".format(server, channel, launch["slug"]))
             break
+
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user == bot.user:
+        return
+
+    if reaction.emoji != SUB_EMOJI:
+        return
+
+    message = reaction.message
+    server = message.guild
+
+    if message.author == bot.user:
+        footer_text = message.embeds[0].footer.text
+        slug = footer_text.split("|")[1].strip()
+        launch = await get_launch_by_slug(slug)
+        live_url = get_live_url(launch)
+        win_open = get_launch_win_open(launch)
+        name = launch["name"]
+
+        tc_sub_message = f'{TERMINAL_COUNT_COMMAND} botsub "{server.id}" "{slug}" 0 "{live_url}" "{win_open}" "{user.id}" "{name}"'
+
+        tc_channel = bot.get_channel(TERMINAL_COUNT_CHANNEL_ID)
+        await tc_channel.send(tc_sub_message)
+
+        # tc_user = bot.get_user(TERMINAL_COUNT_USER_ID)
+        # if not tc_user.dm_channel:
+        #     tc_dm = await tc_user.create_dm()
+        # else:
+        #     tc_dm = tc_user.dm_channel
+        # await tc_dm.send(tc_sub_message)
+
+
+@bot.event
+async def on_reaction_remove(reaction, user):
+    if user == bot.user:
+        return
+
+    if reaction.emoji != SUB_EMOJI:
+        return
+
+    message = reaction.message
+    server = message.guild
+
+    if message.author == bot.user:
+        footer_text = message.embeds[0].footer.text
+        slug = footer_text.split("|")[1].strip()
+        launch = await get_launch_by_slug(slug)
+        win_open = get_launch_win_open(launch)
+        name = launch["name"]
+
+        tc_sub_message = f'{TERMINAL_COUNT_COMMAND} botunsub "{server.id}" "{slug}" "{user.id}"'
+
+        tc_channel = bot.get_channel(TERMINAL_COUNT_CHANNEL_ID)
+        await tc_channel.send(tc_sub_message)
+
+        # tc_user = bot.get_user(TERMINAL_COUNT_USER_ID)
+        # if not tc_user.dm_channel:
+        #     tc_dm = await tc_user.create_dm()
+        # else:
+        #     tc_dm = tc_user.dm_channel
+        # await tc_dm.send(tc_sub_message)
 
 
 @bot.event

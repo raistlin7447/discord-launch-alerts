@@ -92,8 +92,15 @@ def get_launch_embed(launch, timezone, show_countdown=True):
 
     embed = discord.Embed()
     embed.title = "{}".format(launch["name"])
-    if launch["mission_description"]:
-        embed.description = launch["mission_description"]
+
+    description = ""
+    if get_live_url(launch):
+        description += f"Live URL: {get_live_url(launch)}"
+    if get_mission_desc(launch):
+        description += f'\n{get_mission_desc(launch)}'
+    if description:
+        embed.description = description
+
     embed.url = "https://www.rocketlaunch.live/launch/{}".format(slug)
     embed.colour = 0x073349
     embed.set_footer(text="Data by rocketlaunch.live | {}".format(slug))
@@ -178,3 +185,18 @@ def get_launch_win_open(launch: dict) -> datetime:
         win_open = launch["win_open"]
     if win_open:
         return parse(win_open)
+
+
+def get_live_url(launch: dict) -> str:
+    for media in launch["media"]:
+        if media["ldfeatured"]:
+            if media["media_url"]:
+                return media["media_url"]
+            elif media["youtube_vidid"]:
+                return f'https://youtu.be/{media["youtube_vidid"]}'
+
+
+def get_mission_desc(launch: dict) -> str:
+    if launch["missions"]:
+        if launch["missions"][0]["description"]:
+            return launch["missions"][0]["description"]
