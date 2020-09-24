@@ -234,13 +234,6 @@ async def on_reaction_add(reaction, user):
         tc_channel = bot.get_channel(TERMINAL_COUNT_CHANNEL_ID)
         await tc_channel.send(tc_sub_message)
 
-        # tc_user = bot.get_user(TERMINAL_COUNT_USER_ID)
-        # if not tc_user.dm_channel:
-        #     tc_dm = await tc_user.create_dm()
-        # else:
-        #     tc_dm = tc_user.dm_channel
-        # await tc_dm.send(tc_sub_message)
-
 
 @bot.event
 async def on_reaction_remove(reaction, user):
@@ -264,13 +257,6 @@ async def on_reaction_remove(reaction, user):
 
         tc_channel = bot.get_channel(TERMINAL_COUNT_CHANNEL_ID)
         await tc_channel.send(tc_sub_message)
-
-        # tc_user = bot.get_user(TERMINAL_COUNT_USER_ID)
-        # if not tc_user.dm_channel:
-        #     tc_dm = await tc_user.create_dm()
-        # else:
-        #     tc_dm = tc_user.dm_channel
-        # await tc_dm.send(tc_sub_message)
 
 
 @bot.event
