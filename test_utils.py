@@ -20,43 +20,57 @@ class TestUtils(unittest.TestCase):
 
     @freeze_time("2018-02-06 08:46:23+00:00")
     def test_get_seconds_to_launch(self):
-        launch = {"win_open": None}
+        launch = {"win_open": None, "t0": None}
         self.assertEqual(get_seconds_to_launch(launch), None)
-        launch = {"win_open": "2018-02-06T18:30:00+00:00"}
+        launch = {"win_open": "2018-02-06T18:30:00+00:00", "t0": None}
         self.assertEqual(get_seconds_to_launch(launch), 35017)
-        launch = {"win_open": "2018-02-06T08:46:25+00:00"}
+        launch = {"win_open": "2018-02-06T18:30:00+00:00", "t0": "2018-02-06T18:40:00+00:00"}
+        self.assertEqual(get_seconds_to_launch(launch), 35617)
+        launch = {"win_open": "2018-02-06T08:46:25+00:00", "t0": None}
         self.assertEqual(get_seconds_to_launch(launch), 2)
-        launch = {"win_open": "2018-02-06T08:46:21+00:00"}  # Past
+        launch = {"win_open": "2018-02-06T08:46:25+00:00", "t0": "2018-02-06T08:46:26+00:00"}
+        self.assertEqual(get_seconds_to_launch(launch), 3)
+        launch = {"win_open": "2018-02-06T08:46:21+00:00", "t0": None}  # Past
         self.assertEqual(get_seconds_to_launch(launch), -2)
 
     @freeze_time("2018-02-06 08:46:23+00:00")
     def test_is_launching_soon(self):
-        launch = {"win_open": None}
+        launch = {"win_open": None, "t0": None}
         self.assertEqual(is_launching_soon(launch), False)
-        launch = {"win_open": "2018-02-06T18:30:00+00:00"}
+        launch = {"win_open": "2018-02-06T18:30:00+00:00", "t0": None}
         self.assertEqual(is_launching_soon(launch), True)
-        launch = {"win_open": "2018-02-06T08:46:25+00:00"}
+        launch = {"win_open": "2018-02-06T18:30:00+00:00", "t0": "2018-02-06T18:31:00+00:00"}
         self.assertEqual(is_launching_soon(launch), True)
-        launch = {"win_open": "2018-02-06T08:46:21+00:00"}  # Past
+        launch = {"win_open": "2018-02-06T08:46:25+00:00", "t0": None}
+        self.assertEqual(is_launching_soon(launch), True)
+        launch = {"win_open": "2018-02-06T08:46:25+00:00", "t0": "2018-02-08T08:46:25+00:00"}
         self.assertEqual(is_launching_soon(launch), False)
-        launch = {"win_open": "2018-03-06T08:46:21+00:00"}
+        launch = {"win_open": "2018-02-06T08:46:21+00:00", "t0": None}  # Past
+        self.assertEqual(is_launching_soon(launch), False)
+        launch = {"win_open": "2018-03-06T08:46:21+00:00", "t0": None}
         self.assertEqual(is_launching_soon(launch), False)
 
     @freeze_time("2018-02-06 08:46:23+00:00")
     def test_has_launched_recently(self):
-        launch = {"win_open": None}
+        launch = {"win_open": None, "t0": None}
         self.assertEqual(has_launched_recently(launch), False)
-        launch = {"win_open": "2018-02-06T18:30:00+00:00"}
+        launch = {"win_open": "2018-02-06T18:30:00+00:00", "t0": None}
         self.assertEqual(has_launched_recently(launch), False)
-        launch = {"win_open": "2018-02-06T08:46:25+00:00"}
+        launch = {"win_open": "2018-02-06T08:46:25+00:00", "t0": None}
         self.assertEqual(has_launched_recently(launch), False)
-        launch = {"win_open": "2018-02-06T08:46:21+00:00"}  # Past
+        launch = {"win_open": "2018-02-06T08:46:25+00:00", "t0": "2018-02-06T08:46:26+00:00"}
+        self.assertEqual(has_launched_recently(launch), False)
+        launch = {"win_open": "2018-02-06T08:46:25+00:00", "t0": "2018-02-06T08:46:21+00:00"}
         self.assertEqual(has_launched_recently(launch), True)
-        launch = {"win_open": "2018-02-06T08:40:23+00:00"}  # Past
+        launch = {"win_open": "2018-02-06T08:46:21+00:00", "t0": None}  # Past
         self.assertEqual(has_launched_recently(launch), True)
-        launch = {"win_open": "2018-02-01T08:40:23+00:00"}  # Past
+        launch = {"win_open": "2018-02-06T08:40:23+00:00", "t0": None}  # Past
+        self.assertEqual(has_launched_recently(launch), True)
+        launch = {"win_open": "2018-02-06T08:40:23+00:00", "t0": "2018-02-06T08:41:23+00:00"}  # Past
+        self.assertEqual(has_launched_recently(launch), True)
+        launch = {"win_open": "2018-02-01T08:40:23+00:00", "t0": None}  # Past
         self.assertEqual(has_launched_recently(launch), False)
-        launch = {"win_open": "2018-03-06T08:46:21+00:00"}
+        launch = {"win_open": "2018-03-06T08:46:21+00:00", "t0": None}
         self.assertEqual(has_launched_recently(launch), False)
 
     def test_convert_quoted_string_in_list(self):

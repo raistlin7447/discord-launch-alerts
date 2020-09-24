@@ -4,8 +4,7 @@ import asyncio
 from typing import List, Union, Dict, Sequence
 import backoff
 import pytz
-from dateutil.parser import parse
-from discord import User, DMChannel, TextChannel
+from discord import DMChannel, TextChannel
 from discord.ext import commands, tasks
 import discord
 import aiohttp
@@ -18,7 +17,7 @@ from launch_monitor import LaunchMonitor, ISOFORMAT
 from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
 from utils import get_config_from_message, get_launch_embed, is_today_launch, is_launching_soon, \
     get_config_from_channel, get_config_from_db_key, get_server_name_from_channel, convert_quoted_string_in_list, \
-    new_aiohttp_connector
+    new_aiohttp_connector, get_launch_win_open
 from local_config import *
 
 
@@ -64,14 +63,14 @@ async def save_launch_alerts(upcoming_launches: List[dict], alert_sent_lms: List
             if config.receive_alerts == "true":
                 for upcoming_launch in upcoming_launches:
                     # Create clean list for all launch monitors
-                    if not upcoming_launch["win_open"]:
+                    if not get_launch_win_open(upcoming_launch):
                         continue
                     new_lm = LaunchMonitor()
                     new_lm.load({
                         "server": config.server_id if hasattr(config, "server_id") else None,
                         "channel": config.channel_id if hasattr(config, "channel_id") else config.user_id,
                         "launch_slug": upcoming_launch["slug"],
-                        "launch_win_open": parse(upcoming_launch["win_open"]).strftime(ISOFORMAT),
+                        "launch_win_open": get_launch_win_open(upcoming_launch).strftime(ISOFORMAT),
                         "last_alert": None
                     }, config.alert_times)
 

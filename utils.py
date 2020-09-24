@@ -9,6 +9,7 @@ from discord import Message, DMChannel, TextChannel
 from pytz import UnknownTimeZoneError
 
 from config import UserConfig, ChannelConfig
+from launch_monitor import ISOFORMAT
 
 
 async def new_aiohttp_connector(*args, **kwargs) -> aiohttp.TCPConnector:
@@ -57,10 +58,9 @@ def get_friendly_string_from_seconds(seconds: int):
 
 
 def get_seconds_to_launch(launch):
-    window_open = launch["win_open"]
+    window_open = get_launch_win_open(launch)
     if window_open:
-        launch_window = parse(window_open)
-        seconds_to_launch = int((launch_window - datetime.now(pytz.utc)).total_seconds())
+        seconds_to_launch = int((window_open - datetime.now(pytz.utc)).total_seconds())
         return seconds_to_launch
 
 
@@ -99,8 +99,8 @@ def get_launch_embed(launch, timezone, show_countdown=True):
     embed.set_footer(text="Data by rocketlaunch.live | {}".format(slug))
 
     #  Date Embed Field
-    if launch["win_open"]:
-        launch_window = parse(launch["win_open"])
+    if get_launch_win_open(launch):
+        launch_window = get_launch_win_open(launch)
         try:
             timezone = pytz.timezone(timezone)
         except UnknownTimeZoneError:
@@ -135,13 +135,13 @@ def get_launch_embed(launch, timezone, show_countdown=True):
 
 
 def is_today_launch(launch, timezone):
-    if not launch["win_open"]:
+    launch_window = get_launch_win_open(launch)
+    if not launch_window:
         return False
 
     timezone = pytz.timezone(timezone)
 
     today_date = datetime.now(timezone).date()
-    launch_window = parse(launch["win_open"])
     launch_window_date = launch_window.date()
 
     return today_date == launch_window_date
@@ -169,3 +169,12 @@ def convert_quoted_string_in_list(args: Tuple[Any]) -> List:
     else:
         new_list = args
     return new_list
+
+
+def get_launch_win_open(launch: dict) -> datetime:
+    if launch["t0"]:
+        win_open = launch["t0"]
+    else:
+        win_open = launch["win_open"]
+    if win_open:
+        return parse(win_open)
