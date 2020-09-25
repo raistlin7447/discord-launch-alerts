@@ -225,8 +225,8 @@ async def on_reaction_add(reaction, user):
         footer_text = message.embeds[0].footer.text
         slug = footer_text.split("|")[1].strip()
         launch = await get_launch_by_slug(slug)
-        live_url = get_live_url(launch)
-        win_open = get_launch_win_open(launch)
+        live_url = get_live_url(launch) or ""
+        win_open = get_launch_win_open(launch) or ""
         name = launch["name"]
 
         tc_sub_message = f'{TERMINAL_COUNT_COMMAND} botsub "{server.id}" "{slug}" 0 "{live_url}" "{win_open}" "{user.id}" "{name}"'
