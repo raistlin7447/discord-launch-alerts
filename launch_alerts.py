@@ -229,7 +229,12 @@ async def on_reaction_add(reaction, user):
         win_open = get_launch_win_open(launch) or ""
         name = launch["name"]
 
-        tc_sub_message = f'{TERMINAL_COUNT_COMMAND} botsub "{server.id}" "{slug}" 0 "{live_url}" "{win_open}" "{user.id}" "{name}"'
+        if launch["provider"]["slug"] == "spacex":
+            tc_parent_id = 6
+        else:
+            tc_parent_id = 17
+
+        tc_sub_message = f'{TERMINAL_COUNT_COMMAND} botsub "{server.id}" "{slug}" {tc_parent_id} "{live_url}" "{win_open}" "{user.id}" "{name}"'
 
         tc_channel = bot.get_channel(TERMINAL_COUNT_CHANNEL_ID)
         await tc_channel.send(tc_sub_message)
