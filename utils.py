@@ -9,6 +9,7 @@ from discord import Message, DMChannel, TextChannel
 from pytz import UnknownTimeZoneError
 
 from config import UserConfig, ChannelConfig
+from local_config import SERVERS_WITH_TC_INTEGRATION
 
 
 async def new_aiohttp_connector(*args, **kwargs) -> aiohttp.TCPConnector:
@@ -86,7 +87,7 @@ def has_launched_recently(launch, seconds=24 * 60 * 60):
         return False
 
 
-def get_launch_embed(launch, timezone, show_countdown=True):
+def get_launch_embed(launch, timezone, show_countdown=True, with_tc=False):
     slug = launch["slug"]
 
     embed = discord.Embed()
@@ -102,7 +103,10 @@ def get_launch_embed(launch, timezone, show_countdown=True):
 
     embed.url = "https://www.rocketlaunch.live/launch/{}".format(slug)
     embed.colour = 0x073349
-    embed.set_footer(text=f"🔔 Subscribe to TerminalCount\nData by rocketlaunch.live | {slug}")
+    footer = f"Data by rocketlaunch.live | {slug}"
+    if with_tc:
+        footer = f"🔔 Subscribe to TerminalCount\n" + footer
+    embed.set_footer(text=footer)
 
     #  Date Embed Field
     if get_launch_win_open(launch):
@@ -158,6 +162,17 @@ def get_server_name_from_channel(channel: Union[TextChannel, DMChannel]) -> Unio
         return channel.guild.name
     elif isinstance(channel, DMChannel):
         return channel.recipient.name
+
+
+def get_server_id_from_channel(channel: Union[TextChannel, DMChannel]) -> Union[int, None]:
+    if isinstance(channel, TextChannel):
+        return channel.guild.id
+    elif isinstance(channel, DMChannel):
+        return channel.recipient.id
+
+
+def has_tc_integration(server_id: int) -> bool:
+    return True if server_id in SERVERS_WITH_TC_INTEGRATION else False
 
 
 def convert_quoted_string_in_list(args: Tuple[Any]) -> List:
