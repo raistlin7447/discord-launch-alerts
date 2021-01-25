@@ -5,6 +5,7 @@ from typing import List, Union, Dict, Sequence
 import backoff
 import pytz
 from discord import DMChannel, TextChannel, Emoji
+from discord.abc import GuildChannel
 from discord.ext import commands, tasks
 import discord
 import aiohttp
@@ -151,6 +152,11 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
         channel = user.dm_channel
         config = UserConfig(lm.channel)
     launch = await get_launch_by_slug(lm.launch)
+
+    # OffNom send Starship tests to #boca-chica
+    if isinstance(channel, GuildChannel) and channel.guild.id == 360523650912223253 and launch["vehicle"]["id"] == 115:
+        channel = bot.get_channel(int(754432168293433354))
+
     asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming up!"))
 
 
