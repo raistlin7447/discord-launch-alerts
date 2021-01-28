@@ -239,6 +239,7 @@ async def on_reaction_add(reaction, user):
         launch = await get_launch_by_slug(slug)
         live_url = get_live_url(launch) or ""
         win_open = get_launch_win_open(launch) or ""
+        expire = win_open + timedelta(days=1)
         name = launch["name"]
 
         if launch["provider"]["slug"] == "spacex":
@@ -246,7 +247,7 @@ async def on_reaction_add(reaction, user):
         else:
             tc_parent_id = 17
 
-        tc_sub_message = f'{TERMINAL_COUNT_COMMAND} botsub "{server.id}" "{slug}" {tc_parent_id} "{live_url}" "{win_open}" "{user.id}" "{name}"'
+        tc_sub_message = f'{TERMINAL_COUNT_COMMAND} botsub "{server.id}" "{slug}" {tc_parent_id} "{live_url}" "{expire}" "{user.id}" "{name}"'
 
         tc_channel = bot.get_channel(TERMINAL_COUNT_CHANNEL_ID)
         await tc_channel.send(tc_sub_message)
