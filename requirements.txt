@@ -1,4 +1,4 @@
-aiohttp==3.6.2
+aiohttp==3.7.4
 backoff==1.10.0
 discord.py==1.6.0
 python-dateutil==2.8.1
