@@ -16,7 +16,7 @@ from acronym_utils import acronym_lookup, get_acronym_embed
 from config import ChannelConfig, UserConfig
 from launch_monitor import LaunchMonitor, ISOFORMAT
 from launch_monitor_utils import LAUNCH_MONITORS_KEY, db
-from utils import get_config_from_message, get_launch_embed, is_today_launch, is_launching_soon, \
+from utils import get_config_from_message, get_launch_embed, is_today_launch, \
     get_config_from_channel, get_config_from_db_key, get_server_name_from_channel, convert_quoted_string_in_list, \
     new_aiohttp_connector, get_launch_win_open, get_live_url, get_server_id_from_channel, has_tc_integration
 from local_config import *
@@ -194,29 +194,9 @@ async def send_launch_panel(channel: Union[TextChannel, DMChannel], launch: Dict
     server_id = get_server_id_from_channel(channel)
     with_tc = has_tc_integration(server_id)
     bot.log.info("[server={}, channel={}, slug={}] launch panel sent".format(server, channel, launch["slug"]))
-    now = datetime.now()
-    if is_launching_soon(launch):
-        seconds_to_keep_updated = 60 * 15
-    else:
-        seconds_to_keep_updated = 1
-    update_until = now + timedelta(seconds=seconds_to_keep_updated)
-    launch_message = None
-    # TODO find a better way to keep panels updated.  Time doesn't seem the best idea.  Maybe after a certain number
-    #     message have passed by in the channel?
-    while True:
-        if not launch_message:
-            launch_message = await channel.send(message, embed=get_launch_embed(launch, timezone, with_tc=with_tc))
-            if with_tc:
-                await launch_message.add_reaction(SUB_EMOJI)
-        else:
-            await launch_message.edit(content=message, embed=get_launch_embed(launch, timezone, with_tc=with_tc))
-        await asyncio.sleep(1)
-        now = datetime.now()
-        if now > update_until:
-            if launch_message:
-                await launch_message.edit(content=message, embed=get_launch_embed(launch, timezone, show_countdown=False, with_tc=with_tc))
-            bot.log.info("[server={}, channel={}, slug={}] done updating".format(server, channel, launch["slug"]))
-            break
+    launch_message = await channel.send(message, embed=get_launch_embed(launch, timezone, with_tc=with_tc))
+    if with_tc:
+        await launch_message.add_reaction(SUB_EMOJI)
 
 
 @bot.event
