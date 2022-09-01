@@ -157,8 +157,15 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
     if isinstance(channel, GuildChannel) and channel.guild.id == 360523650912223253 and launch["vehicle"]["id"] == 115:
         channel = bot.get_channel(int(754432168293433354))
 
-    asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming up!"))
+    async for msg in channel.history(limit = 3):
+        if msg.embeds and msg.author == bot.user:
+            if msg.embeds[0].footer.text.split(" | ")[1] == launch["slug"]:
+                launch_window = get_launch_win_open(launch)
+                if int(launch_window.timestamp()) == int(msg.embeds[0].fields[0].name.split(":")[1]):
+                    #Skip alerting everyone
+                    return
 
+    asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming up!"))
 
 @backoff.on_exception(backoff.expo,
                       Exception,
