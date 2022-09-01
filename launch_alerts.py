@@ -159,6 +159,14 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
 
     asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming up!"))
 
+    async for msg in channel.history(limit = 3):
+        if msg.embeds and msg.author == bot.user:
+            if msg.embeds[0].title == launch["name"]:
+                launch_window = get_launch_win_open(launch)
+                if int(launch_window.timestamp()) == int(msg.embeds[0].fields[0].name.split(":")[1]):
+                    #Skip alerting everyone
+                    return
+
 
 @backoff.on_exception(backoff.expo,
                       Exception,
