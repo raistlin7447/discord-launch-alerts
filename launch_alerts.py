@@ -159,7 +159,7 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
 
     async for msg in channel.history(limit = 3):
         if msg.embeds and msg.author == bot.user:
-            if msg.embeds[0].title == launch["name"]:
+            if msg.embeds[0].footer.text.split(" | ")[1] == launch["slug"]:
                 launch_window = get_launch_win_open(launch)
                 if int(launch_window.timestamp()) == int(msg.embeds[0].fields[0].name.split(":")[1]):
                     #Skip alerting everyone
