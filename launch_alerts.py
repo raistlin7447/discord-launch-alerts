@@ -163,6 +163,8 @@ async def send_launch_alert(lm: LaunchMonitor) -> None:
                 launch_window = get_launch_win_open(launch)
                 if int(launch_window.timestamp()) == int(msg.embeds[0].fields[0].name.split(":")[1]):
                     #Skip alerting everyone
+                    server = get_server_name_from_channel(channel)
+                    bot.log.info("[server={}, channel={}, slug={}] launch panel ignored".format(server, channel, launch["slug"]))
                     return
 
     asyncio.ensure_future(send_launch_panel(channel, launch, config.timezone, message="There's a launch coming up!"))
